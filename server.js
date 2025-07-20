@@ -19,6 +19,11 @@ app.use(cors());
 app.use(bodyParser.json());
 app.use(express.static('public'));
 
+// Serve homepage by default
+app.get('/', (req, res) => {
+  res.sendFile(__dirname + '/public/homepage.html');
+});
+
 // Store interview sessions (in production, use a database)
 const sessions = new Map();
 
@@ -621,5 +626,4 @@ app.get('/api/debug/sessions', (req, res) => {
 
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
-  console.log(`Make sure to set your RIBBON_API_KEY in the .env file`);
 });

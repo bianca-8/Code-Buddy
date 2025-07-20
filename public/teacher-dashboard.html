@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Code Buddy - Teacher Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.auth0.com/js/auth0-spa-js/2.0/auth0-spa-js.production.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 40px;
+            color: white;
+        }
+        
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+        }
+        
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+        }
+        
+        .logout-btn {
+            background: rgba(255,255,255,0.2);
+            color: white;
+            border: 1px solid rgba(255,255,255,0.3);
+            padding: 8px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .logout-btn:hover {
+            background: rgba(255,255,255,0.3);
+        }
+        
+        .card {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        
+        .coming-soon {
+            font-size: 3rem;
+            margin-bottom: 20px;
+        }
+        
+        .feature-list {
+            text-align: left;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px 0;
+        }
+        
+        .feature-list h3 {
+            color: #333;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        .feature-list ul {
+            list-style: none;
+            padding: 0;
+        }
+        
+        .feature-list li {
+            background: #f8f9fa;
+            padding: 15px 20px;
+            margin-bottom: 10px;
+            border-radius: 10px;
+            border-left: 4px solid #667eea;
+        }
+        
+        .feature-list li strong {
+            color: #333;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>👨‍🏫 Code Buddy - Teacher Dashboard</h1>
+            <div class="user-info">
+                <div class="user-avatar" id="userAvatar">👤</div>
+                <div>
+                    <div id="userName">Loading...</div>
+                    <div style="font-size: 0.9rem; opacity: 0.8;" id="userEmail">Loading...</div>
+                </div>
+                <button class="logout-btn" onclick="logout()">Logout</button>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="coming-soon">🚧</div>
+            <h2 style="color: #333; margin-bottom: 20px;">Teacher Dashboard Coming Soon!</h2>
+            <p style="color: #666; font-size: 1.1rem; margin-bottom: 30px;">
+                We're building powerful tools for educators to manage and analyze student code submissions.
+            </p>
+            
+            <div class="feature-list">
+                <h3>🔜 Upcoming Features:</h3>
+                <ul>
+                    <li><strong>Student Management:</strong> View and manage your students' submissions</li>
+                    <li><strong>Batch Analysis:</strong> Analyze multiple submissions at once</li>
+                    <li><strong>Detailed Reports:</strong> Comprehensive analytics and insights</li>
+                    <li><strong>Classroom Overview:</strong> Dashboard with class-wide statistics</li>
+                    <li><strong>Custom Assessments:</strong> Create custom coding assessments</li>
+                    <li><strong>Export Tools:</strong> Export results to CSV/PDF for grading</li>
+                    <li><strong>Integration:</strong> Connect with LMS platforms</li>
+                </ul>
+            </div>
+            
+            <p style="color: #666; margin-top: 30px;">
+                For now, you can access the student portal to test the interview system.
+            </p>
+            
+            <div style="margin-top: 20px;">
+                <a href="/student-portal.html" style="display: inline-block; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: 600;">
+                    Test Student Portal
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Auth0 configuration
+        const AUTH0_DOMAIN = 'dev-rb7h2zv1l2rb2ysz.us.auth0.com';
+        const AUTH0_CLIENT_ID = 'uKOsiJ2LfZsP55dhiTzvYPz0Ndyy9SA6';
+        
+        let auth0Client;
+        let currentUser;
+
+        // Initialize Auth0 and check authentication
+        async function initAuth0() {
+            try {
+                auth0Client = await auth0.createAuth0Client({
+                    domain: AUTH0_DOMAIN,
+                    clientId: AUTH0_CLIENT_ID,
+                    authorizationParams: {
+                        redirect_uri: window.location.origin + '/teacher-dashboard.html'
+                    }
+                });
+
+                // Handle authentication callback
+                if (window.location.search.includes('code=')) {
+                    await auth0Client.handleRedirectCallback();
+                    window.history.replaceState({}, document.title, window.location.pathname);
+                }
+
+                // Check if user is authenticated
+                const isAuthenticated = await auth0Client.isAuthenticated();
+                if (!isAuthenticated) {
+                    // Redirect to homepage if not authenticated
+                    window.location.href = '/homepage.html';
+                    return;
+                }
+
+                // Get user info and display
+                currentUser = await auth0Client.getUser();
+                displayUserInfo(currentUser);
+
+            } catch (error) {
+                console.error('Auth0 initialization failed:', error);
+                alert('Authentication failed. Redirecting to homepage.');
+                window.location.href = '/homepage.html';
+            }
+        }
+
+        // Display user information
+        function displayUserInfo(user) {
+            document.getElementById('userName').textContent = user.name || 'Teacher';
+            document.getElementById('userEmail').textContent = user.email || '';
+            
+            if (user.picture) {
+                document.getElementById('userAvatar').innerHTML = `<img src="${user.picture}" alt="Avatar" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;">`;
+            } else {
+                document.getElementById('userAvatar').textContent = (user.name || 'T')[0].toUpperCase();
+            }
+        }
+
+        // Logout function
+        async function logout() {
+            try {
+                await auth0Client.logout({
+                    logoutParams: {
+                        returnTo: window.location.origin + '/homepage.html'
+                    }
+                });
+            } catch (error) {
+                console.error('Logout failed:', error);
+                window.location.href = '/homepage.html';
+            }
+        }
+
+        // Initialize when page loads
+        window.addEventListener('load', initAuth0);
+    </script>
+</body>
+</html>

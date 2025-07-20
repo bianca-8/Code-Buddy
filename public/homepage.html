@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Code Buddy - AI Detection Platform</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.auth0.com/js/auth0-spa-js/2.0/auth0-spa-js.production.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .hero {
+            text-align: center;
+            color: white;
+            margin-bottom: 60px;
+        }
+        
+        .hero h1 {
+            font-size: 3.5rem;
+            font-weight: 700;
+            margin-bottom: 20px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .hero p {
+            font-size: 1.3rem;
+            opacity: 0.9;
+            max-width: 600px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+        
+        .auth-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 40px;
+            width: 100%;
+            max-width: 800px;
+        }
+        
+        .auth-card {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            text-align: center;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .auth-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 30px 60px rgba(0,0,0,0.15);
+        }
+        
+        .auth-card .icon {
+            font-size: 3rem;
+            margin-bottom: 20px;
+        }
+        
+        .auth-card h2 {
+            font-size: 1.8rem;
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: #333;
+        }
+        
+        .auth-card p {
+            font-size: 1rem;
+            color: #666;
+            margin-bottom: 30px;
+            line-height: 1.5;
+        }
+        
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+            width: 100%;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+        
+        .btn-secondary {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
+        }
+        
+        .btn-secondary:hover {
+            box-shadow: 0 10px 20px rgba(255, 107, 107, 0.3);
+        }
+        
+        .features {
+            margin-top: 80px;
+            text-align: center;
+            color: white;
+            opacity: 0.8;
+        }
+        
+        .features h3 {
+            font-size: 1.5rem;
+            margin-bottom: 20px;
+        }
+        
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 30px;
+            margin-top: 40px;
+        }
+        
+        .feature {
+            text-align: center;
+        }
+        
+        .feature .feature-icon {
+            font-size: 2rem;
+            margin-bottom: 10px;
+        }
+        
+        .feature h4 {
+            font-size: 1.1rem;
+            margin-bottom: 8px;
+        }
+        
+        .feature p {
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+        
+        @media (max-width: 768px) {
+            .hero h1 {
+                font-size: 2.5rem;
+            }
+            
+            .hero p {
+                font-size: 1.1rem;
+            }
+            
+            .auth-cards {
+                grid-template-columns: 1fr;
+            }
+            
+            .container {
+                padding: 20px 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="hero">
+            <h1>🤖 Code Buddy</h1>
+            <p>Advanced AI-powered code authenticity detection platform. Verify code authorship through intelligent interviews and analysis.</p>
+        </div>
+        
+        <div class="auth-cards">
+            <div class="auth-card">
+                <div class="icon">🎓</div>
+                <h2>Student Portal</h2>
+                <p>Submit your code and take an interview to demonstrate your understanding. Get instant feedback on your coding knowledge.</p>
+                <button class="btn" onclick="loginAsStudent()">Sign In as Student</button>
+            </div>
+            
+            <div class="auth-card">
+                <div class="icon">👨‍🏫</div>
+                <h2>Teacher Dashboard</h2>
+                <p>Review student submissions, analyze interview results, and manage your classroom with powerful AI insights.</p>
+                <button class="btn btn-secondary" onclick="loginAsTeacher()">Sign In as Teacher</button>
+            </div>
+        </div>
+        
+        <div class="features">
+            <h3>✨ Platform Features</h3>
+            <div class="features-grid">
+                <div class="feature">
+                    <div class="feature-icon">🔍</div>
+                    <h4>AI Code Analysis</h4>
+                    <p>Advanced detection of AI-generated vs human-written code</p>
+                </div>
+                <div class="feature">
+                    <div class="feature-icon">🎤</div>
+                    <h4>Smart Interviews</h4>
+                    <p>Dynamic questions tailored to each code submission</p>
+                </div>
+                <div class="feature">
+                    <div class="feature-icon">📊</div>
+                    <h4>Detailed Reports</h4>
+                    <p>Comprehensive analysis with confidence scores</p>
+                </div>
+                <div class="feature">
+                    <div class="feature-icon">🔒</div>
+                    <h4>Secure & Private</h4>
+                    <p>Enterprise-grade security with Auth0 authentication</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Auth0 configuration
+        const AUTH0_DOMAIN = 'dev-rb7h2zv1l2rb2ysz.us.auth0.com';
+        const AUTH0_CLIENT_ID = 'uKOsiJ2LfZsP55dhiTzvYPz0Ndyy9SA6';
+        
+        let auth0Client;
+        
+        // Initialize Auth0
+        async function initAuth0() {
+            try {
+                console.log('Initializing Auth0...');
+                auth0Client = await auth0.createAuth0Client({
+                    domain: AUTH0_DOMAIN,
+                    clientId: AUTH0_CLIENT_ID,
+                    authorizationParams: {
+                        redirect_uri: window.location.origin + '/student-portal.html'
+                    }
+                });
+                console.log('Auth0 client created successfully');
+                
+                // Check if user is already authenticated
+                const isAuthenticated = await auth0Client.isAuthenticated();
+                if (isAuthenticated) {
+                    const user = await auth0Client.getUser();
+                    console.log('User already authenticated:', user);
+                }
+            } catch (error) {
+                console.error('Auth0 initialization failed:', error);
+                alert('Authentication service initialization failed: ' + error.message);
+            }
+        }
+        
+        // Login as Student
+        async function loginAsStudent() {
+            console.log('Student login clicked');
+            
+            if (!auth0Client) {
+                console.error('Auth0 client not initialized');
+                alert('Authentication service is not ready. Please refresh the page and try again.');
+                return;
+            }
+            
+            try {
+                console.log('Starting student login redirect...');
+                await auth0Client.loginWithRedirect({
+                    authorizationParams: {
+                        redirect_uri: window.location.origin + '/student-portal.html',
+                        scope: 'openid profile email'
+                    }
+                });
+            } catch (error) {
+                console.error('Student login failed:', error);
+                alert('Login failed: ' + error.message);
+            }
+        }
+        
+        // Login as Teacher
+        async function loginAsTeacher() {
+            console.log('Teacher login clicked');
+            
+            if (!auth0Client) {
+                console.error('Auth0 client not initialized');
+                alert('Authentication service is not ready. Please refresh the page and try again.');
+                return;
+            }
+            
+            try {
+                console.log('Starting teacher login redirect...');
+                await auth0Client.loginWithRedirect({
+                    authorizationParams: {
+                        redirect_uri: window.location.origin + '/teacher-dashboard.html',
+                        scope: 'openid profile email'
+                    }
+                });
+            } catch (error) {
+                console.error('Teacher login failed:', error);
+                alert('Login failed: ' + error.message);
+            }
+        }
+        
+        // Initialize Auth0 when page loads
+        window.addEventListener('load', async () => {
+            console.log('Page loaded, initializing Auth0...');
+            await initAuth0();
+            
+            // Handle authentication redirect if present
+            if (window.location.search.includes('code=') || window.location.search.includes('error=')) {
+                try {
+                    console.log('Handling auth redirect...');
+                    await auth0Client.handleRedirectCallback();
+                    window.history.replaceState({}, document.title, window.location.pathname);
+                } catch (error) {
+                    console.error('Error handling redirect callback:', error);
+                }
+            }
+        });
+    </script>
+</body>
+</html>
