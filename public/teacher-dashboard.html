@@ -21,7 +21,7 @@
         }
         
         .container {
-            max-width: 1200px;
+            max-width: 1400px;
             margin: 0 auto;
             padding: 20px;
         }
@@ -70,48 +70,326 @@
             background: rgba(255,255,255,0.3);
         }
         
-        .card {
+        .dashboard-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+        
+        .stat-card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        
+        .stat-icon {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+        
+        .stat-number {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 5px;
+        }
+        
+        .stat-label {
+            color: #666;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .main-content {
             background: white;
             border-radius: 20px;
             padding: 40px;
             box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+        }
+        
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
             margin-bottom: 30px;
-            text-align: center;
         }
         
-        .coming-soon {
-            font-size: 3rem;
-            margin-bottom: 20px;
-        }
-        
-        .feature-list {
-            text-align: left;
-            max-width: 600px;
-            margin: 0 auto;
-            padding: 20px 0;
-        }
-        
-        .feature-list h3 {
+        .section-title {
+            font-size: 1.8rem;
+            font-weight: 600;
             color: #333;
-            margin-bottom: 20px;
+        }
+        
+        .refresh-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: transform 0.2s ease;
+        }
+        
+        .refresh-btn:hover {
+            transform: translateY(-2px);
+        }
+        
+        .interviews-grid {
+            display: grid;
+            gap: 20px;
+        }
+        
+        .interview-card {
+            border: 2px solid #f0f0f0;
+            border-radius: 15px;
+            padding: 25px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            position: relative;
+        }
+        
+        .interview-card:hover {
+            border-color: #667eea;
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.15);
+            transform: translateY(-2px);
+        }
+        
+        .interview-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 15px;
+        }
+        
+        .student-info h3 {
+            color: #333;
+            margin-bottom: 5px;
+            font-size: 1.2rem;
+        }
+        
+        .student-email {
+            color: #666;
+            font-size: 0.9rem;
+        }
+        
+        .ai-score {
+            text-align: right;
+        }
+        
+        .score-number {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+        
+        .score-label {
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            opacity: 0.8;
+        }
+        
+        .interview-meta {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #f0f0f0;
+        }
+        
+        .meta-item {
             text-align: center;
         }
         
-        .feature-list ul {
+        .meta-label {
+            font-size: 0.8rem;
+            color: #666;
+            margin-bottom: 5px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .meta-value {
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+        
+        .loading-spinner {
+            display: inline-block;
+            width: 40px;
+            height: 40px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 15px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .error-message {
+            background: #fee;
+            color: #d32f2f;
+            padding: 20px;
+            border-radius: 10px;
+            border-left: 4px solid #d32f2f;
+            margin: 20px 0;
+        }
+        
+        .quota-exceeded {
+            background: #fff3cd;
+            color: #856404;
+            padding: 30px;
+            border-radius: 10px;
+            border-left: 4px solid #ffc107;
+            margin: 20px 0;
+            text-align: center;
+        }
+        
+        .quota-exceeded h3 {
+            margin-top: 0;
+            color: #856404;
+        }
+        
+        .quota-exceeded .close-btn {
+            background: #ffc107;
+            color: #856404;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            margin-top: 15px;
+        }
+        
+        .quota-exceeded .close-btn:hover {
+            background: #e0a800;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #666;
+        }
+        
+        .empty-icon {
+            font-size: 4rem;
+            margin-bottom: 20px;
+            opacity: 0.5;
+        }
+        
+        /* AI Score Color Coding */
+        .score-high { color: #2e7d32; }
+        .score-medium { color: #f57f17; }
+        .score-low { color: #d32f2f; }
+        .score-unknown { color: #666; }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+        }
+        
+        .modal-content {
+            background: white;
+            margin: 5% auto;
+            padding: 40px;
+            border-radius: 20px;
+            width: 90%;
+            max-width: 800px;
+            max-height: 80vh;
+            overflow-y: auto;
+            position: relative;
+        }
+        
+        .close {
+            position: absolute;
+            right: 20px;
+            top: 20px;
+            font-size: 2rem;
+            cursor: pointer;
+            color: #666;
+        }
+        
+        .close:hover {
+            color: #333;
+        }
+        
+        .detail-section {
+            margin-bottom: 30px;
+        }
+        
+        .detail-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .code-block {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            padding: 20px;
+            font-family: 'Monaco', 'Consolas', monospace;
+            font-size: 0.9rem;
+            overflow-x: auto;
+            white-space: pre-wrap;
+        }
+        
+        .analysis-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+        
+        .analysis-card {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            border-left: 4px solid #667eea;
+        }
+        
+        .analysis-card h4 {
+            margin-bottom: 15px;
+            color: #333;
+        }
+        
+        .analysis-card ul {
             list-style: none;
             padding: 0;
         }
         
-        .feature-list li {
-            background: #f8f9fa;
-            padding: 15px 20px;
-            margin-bottom: 10px;
-            border-radius: 10px;
-            border-left: 4px solid #667eea;
-        }
-        
-        .feature-list li strong {
-            color: #333;
+        .analysis-card li {
+            background: white;
+            padding: 10px 15px;
+            margin-bottom: 8px;
+            border-radius: 6px;
+            border-left: 3px solid #667eea;
         }
     </style>
 </head>
@@ -129,34 +407,76 @@
             </div>
         </div>
 
-        <div class="card">
-            <div class="coming-soon">🚧</div>
-            <h2 style="color: #333; margin-bottom: 20px;">Teacher Dashboard Coming Soon!</h2>
-            <p style="color: #666; font-size: 1.1rem; margin-bottom: 30px;">
-                We're building powerful tools for educators to manage and analyze student code submissions.
-            </p>
-            
-            <div class="feature-list">
-                <h3>🔜 Upcoming Features:</h3>
-                <ul>
-                    <li><strong>Student Management:</strong> View and manage your students' submissions</li>
-                    <li><strong>Batch Analysis:</strong> Analyze multiple submissions at once</li>
-                    <li><strong>Detailed Reports:</strong> Comprehensive analytics and insights</li>
-                    <li><strong>Classroom Overview:</strong> Dashboard with class-wide statistics</li>
-                    <li><strong>Custom Assessments:</strong> Create custom coding assessments</li>
-                    <li><strong>Export Tools:</strong> Export results to CSV/PDF for grading</li>
-                    <li><strong>Integration:</strong> Connect with LMS platforms</li>
-                </ul>
+        <!-- Dashboard Stats -->
+        <div class="dashboard-stats">
+            <div class="stat-card">
+                <div class="stat-icon">📊</div>
+                <div class="stat-number" id="totalInterviews">-</div>
+                <div class="stat-label">Total Interviews</div>
             </div>
-            
-            <p style="color: #666; margin-top: 30px;">
-                For now, you can access the student portal to test the interview system.
-            </p>
-            
-            <div style="margin-top: 20px;">
-                <a href="/student-portal.html" style="display: inline-block; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: 600;">
-                    Test Student Portal
-                </a>
+            <div class="stat-card">
+                <div class="stat-icon">🤖</div>
+                <div class="stat-number" id="avgAiScore">-</div>
+                <div class="stat-label">Avg AI Score</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">✅</div>
+                <div class="stat-number" id="humanWritten">-</div>
+                <div class="stat-label">Likely Human</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">⚠️</div>
+                <div class="stat-number" id="aiGenerated">-</div>
+                <div class="stat-label">Likely AI</div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <div class="section-header">
+                <h2 class="section-title">🔍 Recent Student Interviews</h2>
+                <button class="refresh-btn" onclick="loadRecentInterviews()">
+                    🔄 Refresh
+                </button>
+            </div>
+
+            <!-- Loading State -->
+            <div id="loading" class="loading">
+                <div class="loading-spinner"></div>
+                <div>Loading recent interviews...</div>
+            </div>
+
+            <!-- Error State -->
+            <div id="error" class="error-message" style="display: none;">
+                <strong>Error:</strong> <span id="errorMessage"></span>
+            </div>
+
+            <!-- Empty State -->
+            <div id="emptyState" class="empty-state" style="display: none;">
+                <div class="empty-icon">📝</div>
+                <h3>No Recent Interviews</h3>
+                <p>No completed interviews found with successful AI analysis. This could mean:</p>
+                <ul style="text-align: left; margin: 20px auto; max-width: 400px;">
+                    <li>No students have completed interviews yet</li>
+                    <li>Gemini API quota limit reached (resets daily)</li>
+                    <li>All interviews are still in progress</li>
+                </ul>
+                <p style="margin-top: 20px;">Students can submit code via the <a href="/student-portal.html" style="color: #667eea;">Student Portal</a>.</p>
+            </div>
+
+            <!-- Interviews Grid -->
+            <div id="interviewsGrid" class="interviews-grid" style="display: none;">
+                <!-- Interview cards will be dynamically populated here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Interview Detail Modal -->
+    <div id="interviewModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal()">&times;</span>
+            <div id="modalContent">
+                <!-- Modal content will be dynamically populated -->
             </div>
         </div>
     </div>
@@ -168,6 +488,7 @@
         
         let auth0Client;
         let currentUser;
+        let interviewsData = [];
 
         // Initialize Auth0 and check authentication
         async function initAuth0() {
@@ -197,6 +518,9 @@
                 // Get user info and display
                 currentUser = await auth0Client.getUser();
                 displayUserInfo(currentUser);
+                
+                // Load dashboard data
+                loadRecentInterviews();
 
             } catch (error) {
                 console.error('Auth0 initialization failed:', error);
@@ -217,6 +541,267 @@
             }
         }
 
+        // Load recent interviews
+        async function loadRecentInterviews() {
+            showLoading();
+            hideError();
+            
+            try {
+                console.log('Fetching recent interviews...');
+                const response = await fetch('/api/teacher/recent-interviews');
+                const data = await response.json();
+                
+                if (!data.success) {
+                    throw new Error(data.error || 'Failed to load interviews');
+                }
+                
+                interviewsData = data.interviews;
+                console.log('Loaded interviews:', interviewsData);
+                
+                updateDashboardStats(interviewsData);
+                displayInterviews(interviewsData);
+                
+            } catch (error) {
+                console.error('Error loading interviews:', error);
+                showError(error.message);
+            } finally {
+                hideLoading();
+            }
+        }
+
+        // Update dashboard statistics
+        function updateDashboardStats(interviews) {
+            const total = interviews.length;
+            const avgScore = total > 0 ? Math.round(interviews.reduce((sum, i) => sum + i.aiScore, 0) / total) : 0;
+            const humanWritten = interviews.filter(i => i.aiScore >= 70).length;
+            const aiGenerated = interviews.filter(i => i.aiScore < 30).length;
+            
+            document.getElementById('totalInterviews').textContent = total;
+            document.getElementById('avgAiScore').textContent = avgScore;
+            document.getElementById('humanWritten').textContent = humanWritten;
+            document.getElementById('aiGenerated').textContent = aiGenerated;
+        }
+
+        // Display interviews in grid
+        function displayInterviews(interviews) {
+            const grid = document.getElementById('interviewsGrid');
+            const emptyState = document.getElementById('emptyState');
+            
+            if (interviews.length === 0) {
+                grid.style.display = 'none';
+                emptyState.style.display = 'block';
+                return;
+            }
+            
+            emptyState.style.display = 'none';
+            grid.style.display = 'block';
+            
+            grid.innerHTML = interviews.map(interview => createInterviewCard(interview)).join('');
+        }
+
+        // Create interview card HTML
+        function createInterviewCard(interview) {
+            const scoreClass = getScoreClass(interview.aiScore);
+            const completedDate = new Date(interview.completedAt).toLocaleDateString();
+            const completedTime = new Date(interview.completedAt).toLocaleTimeString();
+            
+            return `
+                <div class="interview-card" onclick="openInterviewDetails('${interview.interviewId}')">
+                    <div class="interview-header">
+                        <div class="student-info">
+                            <h3>${interview.studentName}</h3>
+                            <div class="student-email">${interview.studentEmail}</div>
+                        </div>
+                        <div class="ai-score">
+                            <div class="score-number ${scoreClass}">${interview.aiScore}</div>
+                            <div class="score-label">AI Score</div>
+                        </div>
+                    </div>
+                    
+                    <div class="interview-meta">
+                        <div class="meta-item">
+                            <div class="meta-label">Language</div>
+                            <div class="meta-value">${interview.language}</div>
+                        </div>
+                        <div class="meta-item">
+                            <div class="meta-label">Likelihood</div>
+                            <div class="meta-value">${interview.aiLikelihood}</div>
+                        </div>
+                        <div class="meta-item">
+                            <div class="meta-label">Confidence</div>
+                            <div class="meta-value">${interview.confidence}</div>
+                        </div>
+                        <div class="meta-item">
+                            <div class="meta-label">Completed</div>
+                            <div class="meta-value">${completedDate}</div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Get CSS class for AI score
+        function getScoreClass(score) {
+            if (score >= 70) return 'score-high';
+            if (score >= 50) return 'score-medium';
+            if (score >= 30) return 'score-low';
+            return 'score-unknown';
+        }
+
+        // Open interview details modal
+        async function openInterviewDetails(interviewId) {
+            const modal = document.getElementById('interviewModal');
+            const modalContent = document.getElementById('modalContent');
+            
+            modalContent.innerHTML = '<div class="loading"><div class="loading-spinner"></div><div>Loading interview details...</div></div>';
+            modal.style.display = 'block';
+            
+            try {
+                const response = await fetch(`/api/teacher/interview/${interviewId}`);
+                const data = await response.json();
+                
+                if (!response.ok) {
+                    if (response.status === 503 && data.details?.includes('quota exceeded')) {
+                        // Special handling for quota exceeded
+                        modalContent.innerHTML = `
+                            <div class="quota-exceeded">
+                                <h3>⚠️ AI Analysis Temporarily Unavailable</h3>
+                                <p>${data.details}</p>
+                                <p>The Gemini AI service has reached its daily quota limit. Analysis will be available again in approximately ${data.retryAfter || '24 hours'}.</p>
+                                <button onclick="closeModal()" class="close-btn">Close</button>
+                            </div>
+                        `;
+                        return;
+                    } else {
+                        throw new Error(data.error || `Server error: ${response.status}`);
+                    }
+                }
+                
+                if (!data.success) {
+                    throw new Error(data.error || 'Failed to load interview details');
+                }
+                
+                modalContent.innerHTML = createDetailedView(data);
+                
+            } catch (error) {
+                console.error('Error loading interview details:', error);
+                modalContent.innerHTML = `<div class="error-message">Failed to load interview details: ${error.message}</div>`;
+            }
+        }
+
+        // Create detailed view HTML
+        function createDetailedView(data) {
+            const scoreClass = getScoreClass(data.analysis.score);
+            
+            // Safe date handling
+            let completedDate = 'Date not available';
+            try {
+                if (data.completedAt) {
+                    const date = new Date(data.completedAt);
+                    if (!isNaN(date.getTime())) {
+                        completedDate = date.toLocaleString();
+                    }
+                }
+            } catch (error) {
+                console.error('Date parsing error:', error);
+            }
+            
+            return `
+                <h2 style="margin-bottom: 30px;">📊 Interview Analysis: ${data.studentInfo.name}</h2>
+                
+                <div class="detail-section">
+                    <div class="detail-title">👤 Student Information</div>
+                    <p><strong>Name:</strong> ${data.studentInfo.name}</p>
+                    <p><strong>Email:</strong> ${data.studentInfo.email}</p>
+                    <p><strong>Language:</strong> ${data.studentInfo.language}</p>
+                    <p><strong>Completed:</strong> ${completedDate}</p>
+                </div>
+
+                <div class="detail-section">
+                    <div class="detail-title">🤖 AI Detection Analysis</div>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 20px;">
+                        <div style="text-align: center; padding: 20px; background: #f8f9fa; border-radius: 10px;">
+                            <div class="score-number ${scoreClass}" style="font-size: 3rem;">${data.analysis.score}</div>
+                            <div>AI Detection Score</div>
+                        </div>
+                        <div style="text-align: center; padding: 20px; background: #f8f9fa; border-radius: 10px;">
+                            <div style="font-size: 1.2rem; font-weight: 600; margin-bottom: 5px;">${data.analysis.aiLikelihood}</div>
+                            <div style="color: #666;">Likelihood</div>
+                        </div>
+                        <div style="text-align: center; padding: 20px; background: #f8f9fa; border-radius: 10px;">
+                            <div style="font-size: 1.2rem; font-weight: 600; margin-bottom: 5px;">${data.analysis.confidence}</div>
+                            <div style="color: #666;">Confidence</div>
+                        </div>
+                    </div>
+                    <p><strong>Analysis:</strong> ${data.analysis.reasoning}</p>
+                </div>
+
+                ${data.originalCode ? `
+                <div class="detail-section">
+                    <div class="detail-title">💻 Original Code</div>
+                    <div class="code-block">${data.originalCode}</div>
+                </div>
+                ` : ''}
+
+                <div class="detail-section">
+                    <div class="detail-title">🎤 Interview Transcript</div>
+                    <div class="code-block">${data.transcript}</div>
+                </div>
+
+                <div class="analysis-grid">
+                    ${data.analysis.redFlags && data.analysis.redFlags.length > 0 ? `
+                    <div class="analysis-card">
+                        <h4>🚩 AI Generation Indicators</h4>
+                        <ul>
+                            ${data.analysis.redFlags.map(flag => `<li>${flag}</li>`).join('')}
+                        </ul>
+                    </div>
+                    ` : ''}
+                    
+                    ${data.analysis.humanIndicators && data.analysis.humanIndicators.length > 0 ? `
+                    <div class="analysis-card">
+                        <h4>👤 Human Authorship Indicators</h4>
+                        <ul>
+                            ${data.analysis.humanIndicators.map(indicator => `<li>${indicator}</li>`).join('')}
+                        </ul>
+                    </div>
+                    ` : ''}
+                    
+                    ${data.analysis.keyObservations && data.analysis.keyObservations.length > 0 ? `
+                    <div class="analysis-card">
+                        <h4>🔍 Key Observations</h4>
+                        <ul>
+                            ${data.analysis.keyObservations.map(obs => `<li>${obs}</li>`).join('')}
+                        </ul>
+                    </div>
+                    ` : ''}
+                </div>
+            `;
+        }
+
+        // Close modal
+        function closeModal() {
+            document.getElementById('interviewModal').style.display = 'none';
+        }
+
+        // Utility functions
+        function showLoading() {
+            document.getElementById('loading').style.display = 'block';
+        }
+
+        function hideLoading() {
+            document.getElementById('loading').style.display = 'none';
+        }
+
+        function showError(message) {
+            document.getElementById('errorMessage').textContent = message;
+            document.getElementById('error').style.display = 'block';
+        }
+
+        function hideError() {
+            document.getElementById('error').style.display = 'none';
+        }
+
         // Logout function
         async function logout() {
             try {
@@ -228,6 +813,14 @@
             } catch (error) {
                 console.error('Logout failed:', error);
                 window.location.href = '/homepage.html';
+            }
+        }
+
+        // Close modal when clicking outside
+        window.onclick = function(event) {
+            const modal = document.getElementById('interviewModal');
+            if (event.target === modal) {
+                closeModal();
             }
         }
 

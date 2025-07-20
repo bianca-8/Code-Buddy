@@ -3,6 +3,8 @@ const axios = require('axios');
 const cors = require('cors');
 const bodyParser = require('body-parser');
 const { GoogleGenerativeAI } = require('@google/generative-ai');
+const fs = require('fs');
+const path = require('path');
 require('dotenv').config();
 
 const app = express();
@@ -13,6 +15,37 @@ const RIBBON_BASE_URL = 'https://app.ribbon.ai/be-api/v1';
 
 // Initialize Gemini AI
 const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
+
+// Persistent storage for analysis results
+const ANALYSIS_FILE = path.join(__dirname, 'analysis_results.json');
+
+// Load existing analysis results from file
+function loadAnalysisResults() {
+  try {
+    if (fs.existsSync(ANALYSIS_FILE)) {
+      const data = fs.readFileSync(ANALYSIS_FILE, 'utf8');
+      return new Map(JSON.parse(data));
+    }
+  } catch (error) {
+    console.error('Error loading analysis results:', error);
+  }
+  return new Map();
+}
+
+// Save analysis results to file
+function saveAnalysisResults(analysisMap) {
+  try {
+    const data = JSON.stringify([...analysisMap.entries()], null, 2);
+    fs.writeFileSync(ANALYSIS_FILE, data, 'utf8');
+    console.log(`💾 Saved analysis results to ${ANALYSIS_FILE}`);
+  } catch (error) {
+    console.error('Error saving analysis results:', error);
+  }
+}
+
+// Load persistent analysis results
+const persistentAnalysis = loadAnalysisResults();
+console.log(`📊 Loaded ${persistentAnalysis.size} existing analysis results`);
 
 // Middleware
 app.use(cors());
@@ -631,6 +664,321 @@ app.get('/api/debug/sessions', (req, res) => {
     sessionCount: sessions.size,
     sessions: sessionData
   });
+});
+
+// Teacher dashboard endpoint - get recent interviews with AI analysis
+app.get('/api/teacher/recent-interviews', async (req, res) => {
+  try {
+    console.log('Fetching recent interviews for teacher dashboard...');
+    console.log(`Using Ribbon API Key: ${RIBBON_API_KEY.substring(0, 8)}...${RIBBON_API_KEY.substring(-4)} (from your account)`);
+    
+    // Get all interviews from Ribbon API
+    const response = await axios.get(`${RIBBON_BASE_URL}/interviews?limit=1000`, {
+      headers: {
+        'Authorization': `Bearer ${RIBBON_API_KEY}`,
+        'Accept': 'application/json'
+      }
+    });
+    
+    const interviews = response.data.interviews || [];
+    console.log(`Found ${interviews.length} total interviews`);
+    
+    // Process interviews and get the most recent 5 completed ones
+    const processedInterviews = [];
+    
+    for (const interview of interviews) {
+      const interviewData = interview.interview_data || interview;
+      const status = interview.status || interview.interview_data?.status;
+      const interviewId = interviewData.interview_id || interview.interview_id;
+      
+      // Only include completed interviews
+      if (status === 'completed' && interviewData.transcript) {
+        // Get session data if available
+        const session = sessions.get(interviewId);
+        
+        // Check if we already have persistent analysis for this interview
+        let analysis = persistentAnalysis.get(interviewId);
+        
+        if (!analysis) {
+          // Perform AI analysis only if not previously analyzed
+          try {
+            console.log(`🤖 Analyzing interview ${interviewId} (not previously analyzed)`);
+            const aiAnalysis = await analyzeForAIDetection(interviewData, session?.code || null);
+            
+            // Combine AI analysis with session data for persistent storage
+            analysis = {
+              ...aiAnalysis,
+              // Store student info with the analysis
+              studentInfo: {
+                name: session?.studentName || 'Unknown Student',
+                email: session?.studentEmail || 'Unknown Email', 
+                language: session?.language || 'Unknown',
+                code: session?.code || null
+              },
+              analyzedAt: new Date().toISOString(),
+              interviewId: interviewId
+            };
+            
+            // Save to persistent storage
+            persistentAnalysis.set(interviewId, analysis);
+            saveAnalysisResults(persistentAnalysis);
+          } catch (analysisError) {
+            // Check if it's a quota exceeded error (429) or rate limit
+            if (analysisError.message?.includes('429') || 
+                analysisError.message?.toLowerCase().includes('quota') ||
+                analysisError.message?.toLowerCase().includes('rate limit')) {
+              console.log(`⚠️ Gemini API quota exceeded, showing interview ${interviewId} without AI analysis`);
+              // Still show the interview but without AI analysis with student info
+              analysis = {
+                score: 0,
+                aiLikelihood: 'Analysis unavailable (quota exceeded)',
+                confidence: 'pending',
+                reasoning: 'Gemini API quota exceeded. Try again in 24 hours.',
+                redFlags: [],
+                humanIndicators: [],
+                keyObservations: ['AI analysis temporarily unavailable due to quota limits'],
+                geminiAnalysis: false,
+                // Store student info even when analysis fails
+                studentInfo: {
+                  name: session?.studentName || 'Unknown Student',
+                  email: session?.studentEmail || 'Unknown Email',
+                  language: session?.language || 'Unknown',
+                  code: session?.code || null
+                },
+                analyzedAt: new Date().toISOString(),
+                interviewId: interviewId
+              };
+              // Save this result to avoid retrying
+              persistentAnalysis.set(interviewId, analysis);
+              saveAnalysisResults(persistentAnalysis);
+            } else {
+              console.error(`Failed to analyze interview ${interviewId}:`, analysisError);
+              // Create a default analysis result for other errors with student info
+              analysis = {
+                score: 0,
+                aiLikelihood: 'analysis failed',
+                confidence: 'error',
+                reasoning: `Analysis failed: ${analysisError.message}`,
+                redFlags: [],
+                humanIndicators: [],
+                keyObservations: [],
+                geminiAnalysis: false,
+                // Store student info even when analysis fails
+                studentInfo: {
+                  name: session?.studentName || 'Unknown Student',
+                  email: session?.studentEmail || 'Unknown Email',
+                  language: session?.language || 'Unknown',
+                  code: session?.code || null
+                },
+                analyzedAt: new Date().toISOString(),
+                interviewId: interviewId
+              };
+              // Save the error result to avoid retrying immediately
+              persistentAnalysis.set(interviewId, analysis);
+              saveAnalysisResults(persistentAnalysis);
+            }
+          }
+        } else {
+          console.log(`📋 Using previously analyzed results for interview ${interviewId}`);
+        }
+        
+        // Only add to processed interviews if we have a valid analysis
+        if (analysis) {
+          // Use stored student info from analysis if available, fallback to session
+          const studentInfo = analysis.studentInfo || {
+            name: session?.studentName || 'Unknown Student',
+            email: session?.studentEmail || 'Unknown Email',
+            language: session?.language || 'Unknown',
+            code: session?.code || null
+          };
+          
+          processedInterviews.push({
+            interviewId: interviewId,
+            studentName: studentInfo.name,
+            studentEmail: studentInfo.email,
+            language: studentInfo.language,
+            aiScore: analysis.score,
+            aiLikelihood: analysis.aiLikelihood,
+            confidence: analysis.confidence,
+            completedAt: interviewData.completed_at || new Date().toISOString(),
+            transcriptLength: interviewData.transcript?.length || 0,
+            hasOriginalCode: !!studentInfo.code
+          });
+        }
+      }
+    }
+    
+    // Sort by completion date (most recent first) and take top 5
+    const recentInterviews = processedInterviews
+      .sort((a, b) => new Date(b.completedAt) - new Date(a.completedAt))
+      .slice(0, 5);
+    
+    console.log(`Returning ${recentInterviews.length} recent completed interviews`);
+    
+    res.json({
+      success: true,
+      interviews: recentInterviews,
+      totalProcessed: processedInterviews.length,
+      totalAvailable: interviews.length
+    });
+    
+  } catch (error) {
+    console.error('Error fetching recent interviews:', error);
+    res.status(500).json({ 
+      error: 'Failed to fetch recent interviews',
+      details: error.message 
+    });
+  }
+});
+
+// Teacher dashboard endpoint - get detailed interview analysis
+app.get('/api/teacher/interview/:interviewId', async (req, res) => {
+  try {
+    const { interviewId } = req.params;
+    console.log(`Fetching detailed analysis for interview: ${interviewId}`);
+    
+    // Get interview data from Ribbon API
+    const interviewData = await getInterviewResults(interviewId);
+    
+    if (!interviewData) {
+      return res.status(404).json({ error: 'Interview not found' });
+    }
+    
+    if (interviewData.status !== 'completed') {
+      return res.status(400).json({ 
+        error: 'Interview not completed',
+        status: interviewData.status 
+      });
+    }
+    
+    // Get session data if available
+    const session = sessions.get(interviewId);
+    
+    // Check if we already have persistent analysis for this interview
+    let analysis = persistentAnalysis.get(interviewId);
+    
+    if (!analysis) {
+      // Perform AI analysis only if not previously analyzed
+      try {
+        console.log(`🤖 Analyzing interview ${interviewId} for details (not previously analyzed)`);
+        const aiAnalysis = await analyzeForAIDetection(interviewData, session?.code || null);
+        
+        // Combine AI analysis with session data for persistent storage
+        analysis = {
+          ...aiAnalysis,
+          // Store student info with the analysis
+          studentInfo: {
+            name: session?.studentName || 'Unknown Student',
+            email: session?.studentEmail || 'Unknown Email',
+            language: session?.language || 'Unknown',
+            code: session?.code || null
+          },
+          analyzedAt: new Date().toISOString(),
+          interviewId: interviewId
+        };
+        
+        // Save to persistent storage
+        persistentAnalysis.set(interviewId, analysis);
+        saveAnalysisResults(persistentAnalysis);
+      } catch (analysisError) {
+        // Check if it's a quota exceeded error (429) or rate limit
+        if (analysisError.message?.includes('429') || 
+            analysisError.message?.toLowerCase().includes('quota') ||
+            analysisError.message?.toLowerCase().includes('rate limit')) {
+          console.log(`⚠️ Gemini API quota exceeded for interview details ${interviewId}`);
+          return res.status(503).json({ 
+            error: 'AI analysis temporarily unavailable',
+            details: 'Gemini API quota exceeded. Please try again later.',
+            retryAfter: '24h'
+          });
+        } else {
+          console.error(`Failed to analyze interview ${interviewId}:`, analysisError);
+          // Create a default analysis result for other errors
+          analysis = {
+            score: 0,
+            aiLikelihood: 'analysis failed',
+            confidence: 'error',
+            reasoning: `Analysis failed: ${analysisError.message}`,
+            redFlags: [],
+            humanIndicators: [],
+            keyObservations: [],
+            geminiAnalysis: false,
+            // Store student info even when analysis fails
+            studentInfo: {
+              name: session?.studentName || 'Unknown Student',
+              email: session?.studentEmail || 'Unknown Email',
+              language: session?.language || 'Unknown',
+              code: session?.code || null
+            },
+            analyzedAt: new Date().toISOString(),
+            interviewId: interviewId
+          };
+          // Save the error result to avoid retrying immediately
+          persistentAnalysis.set(interviewId, analysis);
+          saveAnalysisResults(persistentAnalysis);
+        }
+      }
+    } else {
+      console.log(`📋 Using previously analyzed results for interview details ${interviewId}`);
+    }
+    
+    // Use stored student info from analysis if available, fallback to session
+    const studentInfo = analysis.studentInfo || {
+      name: session?.studentName || 'Unknown Student',
+      email: session?.studentEmail || 'Unknown Email',
+      language: session?.language || 'Unknown',
+      code: session?.code || null
+    };
+    
+    res.json({
+      success: true,
+      interviewId: interviewId,
+      studentInfo: {
+        name: studentInfo.name,
+        email: studentInfo.email,
+        language: studentInfo.language
+      },
+      originalCode: studentInfo.code || null,
+      transcript: interviewData.transcript,
+      analysis: analysis,
+      completedAt: interviewData.completed_at || new Date().toISOString(),
+      interviewFlowId: interviewData.interview_flow_id,
+      hasOriginalCode: !!studentInfo.code
+    });
+    
+  } catch (error) {
+    console.error('Error fetching interview details:', error);
+    res.status(500).json({ 
+      error: 'Failed to fetch interview details',
+      details: error.message 
+    });
+  }
+});
+
+// Test endpoint for Gemini API
+app.get('/api/test-gemini', async (req, res) => {
+  try {
+    console.log('Testing Gemini API with current key...');
+    const { GoogleGenerativeAI } = require('@google/generative-ai');
+    const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
+    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+    
+    const result = await model.generateContent('Say "API key working" if you can respond.');
+    const text = result.response.text();
+    
+    res.json({
+      success: true,
+      response: text,
+      message: 'Gemini API key is working correctly'
+    });
+  } catch (error) {
+    console.error('Gemini API test failed:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message,
+      details: error.errorDetails || 'No additional details'
+    });
+  }
 });
 
 app.listen(PORT, () => {
