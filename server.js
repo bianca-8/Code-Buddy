@@ -6,7 +6,7 @@ const { GoogleGenerativeAI } = require('@google/generative-ai');
 require('dotenv').config();
 
 const app = express();
-const PORT =  3000;
+const PORT =  3001;
 const RIBBON_API_KEY = process.env.RIBBON_API_KEY;
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 const RIBBON_BASE_URL = 'https://app.ribbon.ai/be-api/v1';
@@ -77,7 +77,7 @@ async function createInterview(interviewFlowId, studentEmail, studentName) {
     const [firstName, ...lastNameParts] = studentName.split(' ');
     const lastName = lastNameParts.join(' ') || '';
     
-    const response = await axios.post(`${RIBBON_BASE_URL}/interviews`, {
+    const response = await axios.post(`${RIBBON_BASE_URL}/interviews?limit=1000`, {
       interview_flow_id: interviewFlowId,
       interviewee_email_address: studentEmail,
       interviewee_first_name: firstName,
@@ -103,7 +103,7 @@ async function getInterviewResults(interviewId) {
     console.log(`Making request to Ribbon API for interviews...`);
     console.log(`Looking for interview ID: ${interviewId}`);
     
-    const response = await axios.get(`${RIBBON_BASE_URL}/interviews`, {
+    const response = await axios.get(`${RIBBON_BASE_URL}/interviews?limit=1000`, {
       headers: {
         'Authorization': `Bearer ${RIBBON_API_KEY}`,
         'Accept': 'application/json'
@@ -222,16 +222,16 @@ ${originalCode || 'Code not available'}
 
 **Required Output Format (JSON only):**
 {
-  "score": [number from 0-100, where 0=definitely human-written, 100=definitely AI-generated],
-  "confidence": "[low/medium/high]",
+  "score": [number from 0-100, where 0=definitely AI-generated, 100=definitely human-written],
+  "confidence": "[low/medium/high/indecisive]",
   "reasoning": "[detailed explanation of your analysis]",
   "redFlags": ["list of specific concerns suggesting AI generation"],
   "humanIndicators": ["list of specific signs suggesting human authorship"],
-  "keyObservations": ["important patterns you noticed in code or interview"]
+  "keyObservations": ["important patterns you noticed in code or interview"],
+  "indecisive": [true/false, true if there is not enough information to make a confident judgment, or if the code is so basic that either AI or human could have written it]
 }
 
-Focus on concrete evidence. Be thorough but concise. 
-For the interview don't worry about topics that do not relate to the code, such as about personal life or expectations of payment.
+If you cannot confidently determine whether the code is AI- or human-written, set "confidence" to "indecisive" and "indecisive" to true, and explain why in "reasoning".
 `;
 
     const result = await model.generateContent(prompt);
@@ -265,16 +265,18 @@ For the interview don't worry about topics that do not relate to the code, such 
     // Ensure score is within bounds
     geminiAnalysis.score = Math.max(0, Math.min(100, geminiAnalysis.score || 50));
 
-    // Determine AI likelihood based on score
+    // Determine AI likelihood based on score and indecisive/confidence
     let aiLikelihood;
-    if (geminiAnalysis.score >= 70) {
-      aiLikelihood = 'likely AI-generated';
-    } else if (geminiAnalysis.score >= 50) {
-      aiLikelihood = 'possibly AI-generated';
-    } else if (geminiAnalysis.score >= 30) {
-      aiLikelihood = 'possibly human-written';
-    } else {
+    if (geminiAnalysis.indecisive || geminiAnalysis.confidence === 'indecisive') {
+      aiLikelihood = 'indecisive';
+    } else if (geminiAnalysis.score >= 70) {
       aiLikelihood = 'likely human-written';
+    } else if (geminiAnalysis.score >= 50) {
+      aiLikelihood = 'possibly human-written';
+    } else if (geminiAnalysis.score >= 30) {
+      aiLikelihood = 'possibly AI-generated';
+    } else {
+      aiLikelihood = 'likely AI-generated';
     }
 
     return {

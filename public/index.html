@@ -371,6 +371,9 @@
                 <div class="analysis-item">
                     <h4>📈 Confidence Level</h4>
                     <p id="confidence-level">--</p>
+                    <div id="confidence-bar-container" style="background:#e1e5e9; border-radius:8px; height:16px; margin-top:10px;">
+                        <div id="confidence-bar" style="height:16px; border-radius:8px; width:0%; background:linear-gradient(90deg,#dc3545,#ffc107,#28a745); transition:width 0.5s;"></div>
+                    </div>
                 </div>
                 <div class="analysis-item">
                     <h4>👤 Student</h4>
@@ -531,6 +534,33 @@
                 document.getElementById('score-label').textContent = `AI Detection Score (${analysis.confidence} confidence)`;
                 document.getElementById('ai-likelihood').textContent = analysis.aiLikelihood;
                 document.getElementById('confidence-level').textContent = analysis.confidence;
+
+                // Confidence bar logic
+                const confidenceBar = document.getElementById('confidence-bar');
+                let confidencePercent = 0;
+                let barColor = '#ffc107'; // default yellow
+
+                switch ((analysis.confidence || '').toLowerCase()) {
+                    case 'high':
+                        confidencePercent = 100;
+                        barColor = '#28a745'; // green
+                        break;
+                    case 'medium':
+                        confidencePercent = 66;
+                        barColor = '#ffc107'; // yellow
+                        break;
+                    case 'low':
+                        confidencePercent = 33;
+                        barColor = '#dc3545'; // red
+                        break;
+                    default:
+                        confidencePercent = 10;
+                        barColor = '#6c757d'; // gray for indecisive/unknown
+                        break;
+                }
+                confidenceBar.style.width = confidencePercent + '%';
+                confidenceBar.style.background = barColor;
+                
                 document.getElementById('student-info').textContent = `${result.studentInfo.name} (${result.studentInfo.language})`;
                 document.getElementById('analysis-type').textContent = analysis.geminiAnalysis ? 'Gemini AI Enhanced' : 'Basic Analysis';
                 document.getElementById('reasoning').textContent = analysis.reasoning || 'No specific factors identified';
