@@ -565,10 +565,9 @@
                 document.getElementById('analysis-type').textContent = analysis.geminiAnalysis ? 'Gemini AI Enhanced' : 'Basic Analysis';
                 document.getElementById('reasoning').textContent = analysis.reasoning || 'No specific factors identified';
                 
-                // Enhanced highlighting for transcript and code
-                const suspiciousPhrases = analysis.suspiciousPhrases || [];
-                document.getElementById('transcript-text').innerHTML = highlightSuspicious(result.transcript || 'No transcript available', suspiciousPhrases, 'transcript');
-                document.getElementById('original-code-text').innerHTML = highlightSuspicious(result.originalCode || 'Original code not available', suspiciousPhrases, 'code');
+                // Display transcript and code as plain text
+                document.getElementById('transcript-text').textContent = result.transcript || 'No transcript available';
+                document.getElementById('original-code-text').textContent = result.originalCode || 'Original code not available';
                 
                 // Show enhanced Gemini details if available
                 if (analysis.geminiAnalysis && (analysis.redFlags || analysis.humanIndicators || analysis.keyObservations)) {
@@ -653,21 +652,6 @@
             document.getElementById('interview-link-section').style.display = 'none';
         }
         
-        function highlightSuspicious(text, suspiciousPhrases, type) {
-            if (!suspiciousPhrases || suspiciousPhrases.length === 0) return text;
-            let highlighted = text;
-            suspiciousPhrases
-                .filter(p => p.type === type)
-                .forEach(p => {
-                    // Escape regex special chars in phrase
-                    const phrase = p.text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-                    highlighted = highlighted.replace(
-                        new RegExp(phrase, 'g'),
-                        `<mark style="background:#ffb3b3; color:#b30000;" title="${p.reason || 'Suspicious phrase'}">${p.text}</mark>`
-                    );
-                });
-            return highlighted;
-        }
     </script>
 </body>
 </html>

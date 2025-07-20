@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Simple Teacher Dashboard Test</title>
+    <style>
+        .interviews-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+            gap: 20px;
+        }
+        .interview-card {
+            border: 2px solid #f0f0f0;
+            border-radius: 15px;
+            padding: 25px;
+            background: white;
+        }
+    </style>
+</head>
+<body>
+    <h1>Simple Test - Should show 5 interviews</h1>
+    <div id="count">Loading...</div>
+    <div id="interviewsGrid" class="interviews-grid"></div>
+    
+    <script>
+        async function loadAndDisplay() {
+            try {
+                console.log('Fetching interviews...');
+                const response = await fetch('/api/teacher/recent-interviews');
+                const data = await response.json();
+                
+                console.log('API Response:', data);
+                document.getElementById('count').textContent = `Found ${data.interviews.length} interviews`;
+                
+                const grid = document.getElementById('interviewsGrid');
+                grid.innerHTML = data.interviews.map(interview => `
+                    <div class="interview-card">
+                        <h3>${interview.studentName}</h3>
+                        <p>Score: ${interview.aiScore}</p>
+                        <p>Likelihood: ${interview.aiLikelihood}</p>
+                        <p>ID: ${interview.interviewId}</p>
+                    </div>
+                `).join('');
+                
+                console.log('Cards displayed:', data.interviews.length);
+                
+            } catch (error) {
+                console.error('Error:', error);
+                document.getElementById('count').textContent = 'Error: ' + error.message;
+            }
+        }
+        
+        loadAndDisplay();
+    </script>
+</body>
+</html>

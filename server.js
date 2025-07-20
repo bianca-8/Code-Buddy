@@ -387,6 +387,17 @@ In addition to your previous instructions, scan both the code and transcript for
   }
 }
 
+// Helper function to convert detailed AI likelihood to simplified teacher view
+function getTeacherAILikelihood(score, confidence, indecisive) {
+  if (indecisive || confidence === 'indecisive') {
+    return 'indecisive';
+  } else if (score >= 50) {
+    return 'likely human-written';
+  } else {
+    return 'likely AI-generated';
+  }
+}
+
 // Helper functions for text parsing
 function extractScoreFromText(text) {
   const scoreMatch = text.match(/score[\":\s]*(\d+)/i);
@@ -684,6 +695,7 @@ app.get('/api/teacher/recent-interviews', async (req, res) => {
     console.log(`Found ${interviews.length} total interviews`);
     
     // Process interviews and get the most recent 5 completed ones
+    // (regardless of AI score - teacher sees simplified binary classification)
     const processedInterviews = [];
     
     for (const interview of interviews) {
@@ -798,7 +810,7 @@ app.get('/api/teacher/recent-interviews', async (req, res) => {
             studentEmail: studentInfo.email,
             language: studentInfo.language,
             aiScore: analysis.score,
-            aiLikelihood: analysis.aiLikelihood,
+            aiLikelihood: getTeacherAILikelihood(analysis.score, analysis.confidence, analysis.indecisive),
             confidence: analysis.confidence,
             completedAt: interviewData.completed_at || new Date().toISOString(),
             transcriptLength: interviewData.transcript?.length || 0,
@@ -809,11 +821,13 @@ app.get('/api/teacher/recent-interviews', async (req, res) => {
     }
     
     // Sort by completion date (most recent first) and take top 5
+    // Show 5 interviews regardless of AI score distribution
     const recentInterviews = processedInterviews
       .sort((a, b) => new Date(b.completedAt) - new Date(a.completedAt))
       .slice(0, 5);
     
     console.log(`Returning ${recentInterviews.length} recent completed interviews`);
+    console.log(`AI Scores: ${recentInterviews.map(i => `${i.studentName}: ${i.aiScore} (${i.aiLikelihood})`).join(', ')}`);
     
     res.json({
       success: true,
@@ -940,7 +954,11 @@ app.get('/api/teacher/interview/:interviewId', async (req, res) => {
       },
       originalCode: studentInfo.code || null,
       transcript: interviewData.transcript,
-      analysis: analysis,
+      analysis: {
+        ...analysis,
+        // Override aiLikelihood with simplified teacher version
+        aiLikelihood: getTeacherAILikelihood(analysis.score, analysis.confidence, analysis.indecisive)
+      },
       completedAt: interviewData.completed_at || new Date().toISOString(),
       interviewFlowId: interviewData.interview_flow_id,
       hasOriginalCode: !!studentInfo.code

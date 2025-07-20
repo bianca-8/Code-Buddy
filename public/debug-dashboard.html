@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Debug Teacher Dashboard</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .debug { background: #f0f0f0; padding: 10px; margin: 10px 0; border-radius: 5px; }
+        .interviews-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+            border: 2px solid red; /* Debug border */
+            min-height: 200px;
+        }
+        .interview-card {
+            border: 2px solid #333;
+            border-radius: 10px;
+            padding: 20px;
+            background: white;
+        }
+        .interview-card h3 { margin: 0 0 10px 0; color: #333; }
+        .interview-card p { margin: 5px 0; }
+    </style>
+</head>
+<body>
+    <h1>Teacher Dashboard Debug</h1>
+    
+    <div class="debug">
+        <h3>Debug Info:</h3>
+        <div id="debugInfo">Loading...</div>
+    </div>
+    
+    <div class="debug">
+        <h3>API Raw Response:</h3>
+        <pre id="rawResponse">Loading...</pre>
+    </div>
+    
+    <h2>Interviews Grid (should show 5 cards):</h2>
+    <div id="interviewsGrid" class="interviews-grid">
+        <!-- Cards will appear here -->
+    </div>
+    
+    <script>
+        async function debugLoad() {
+            const debugInfo = document.getElementById('debugInfo');
+            const rawResponse = document.getElementById('rawResponse');
+            const grid = document.getElementById('interviewsGrid');
+            
+            try {
+                debugInfo.innerHTML = 'Fetching from API...';
+                
+                const response = await fetch('/api/teacher/recent-interviews');
+                const data = await response.json();
+                
+                // Show raw response
+                rawResponse.textContent = JSON.stringify(data, null, 2);
+                
+                // Show debug info
+                debugInfo.innerHTML = `
+                    <p><strong>Success:</strong> ${data.success}</p>
+                    <p><strong>Number of interviews:</strong> ${data.interviews ? data.interviews.length : 0}</p>
+                    <p><strong>Total processed:</strong> ${data.totalProcessed}</p>
+                    <p><strong>Total available:</strong> ${data.totalAvailable}</p>
+                `;
+                
+                if (data.interviews && data.interviews.length > 0) {
+                    // Create cards
+                    const cardsHTML = data.interviews.map((interview, index) => `
+                        <div class="interview-card">
+                            <h3>Card ${index + 1}: ${interview.studentName}</h3>
+                            <p><strong>ID:</strong> ${interview.interviewId}</p>
+                            <p><strong>Email:</strong> ${interview.studentEmail}</p>
+                            <p><strong>Language:</strong> ${interview.language}</p>
+                            <p><strong>AI Score:</strong> ${interview.aiScore}</p>
+                            <p><strong>Likelihood:</strong> ${interview.aiLikelihood}</p>
+                            <p><strong>Confidence:</strong> ${interview.confidence}</p>
+                            <p><strong>Transcript Length:</strong> ${interview.transcriptLength}</p>
+                        </div>
+                    `).join('');
+                    
+                    grid.innerHTML = cardsHTML;
+                    
+                    debugInfo.innerHTML += `<p><strong>Cards HTML length:</strong> ${cardsHTML.length}</p>`;
+                    debugInfo.innerHTML += `<p><strong>Grid innerHTML set successfully</strong></p>`;
+                } else {
+                    grid.innerHTML = '<div style="color: red; font-weight: bold;">No interviews found</div>';
+                }
+                
+            } catch (error) {
+                debugInfo.innerHTML = `<p style="color: red;"><strong>Error:</strong> ${error.message}</p>`;
+                rawResponse.textContent = `Error: ${error.message}`;
+                grid.innerHTML = `<div style="color: red;">Error loading interviews: ${error.message}</div>`;
+            }
+        }
+        
+        debugLoad();
+    </script>
+</body>
+</html>

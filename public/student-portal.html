@@ -90,7 +90,7 @@
             color: #333;
         }
         
-        select, textarea {
+        select, textarea, input[type="text"], input[type="email"] {
             width: 100%;
             padding: 15px;
             border: 2px solid #e1e5e9;
@@ -100,7 +100,7 @@
             font-family: inherit;
         }
         
-        select:focus, textarea:focus {
+        select:focus, textarea:focus, input[type="text"]:focus, input[type="email"]:focus {
             outline: none;
             border-color: #667eea;
             box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
@@ -162,11 +162,23 @@
         }
         
         .interview-link {
-            background: #f8f9fa;
-            border: 2px solid #e9ecef;
-            border-radius: 12px;
-            padding: 20px;
-            margin: 20px 0;
+            background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+            border: 2px solid #667eea;
+            border-radius: 15px;
+            padding: 25px;
+            margin: 25px 0;
+            text-align: center;
+        }
+
+        .interview-link h4 {
+            color: #667eea;
+            margin-bottom: 15px;
+            font-size: 1.3rem;
+        }
+
+        .interview-link p {
+            margin: 10px 0;
+            color: #555;
         }
         
         .interview-link a {
@@ -174,10 +186,21 @@
             text-decoration: none;
             font-weight: 600;
             word-break: break-all;
+            display: inline-block;
+            background: white;
+            padding: 12px 20px;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+            margin: 15px 0;
+            transition: all 0.3s ease;
         }
         
         .interview-link a:hover {
-            text-decoration: underline;
+            background: #667eea;
+            color: white;
+            text-decoration: none;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
         }
         
         .results-section {
@@ -295,6 +318,16 @@
             <h2 style="margin-bottom: 30px; color: #333;">Submit Your Code for Interview</h2>
             <form id="codeForm">
                 <div class="form-group">
+                    <label for="studentName">Your Name</label>
+                    <input type="text" id="studentName" name="studentName" placeholder="Enter your full name..." required>
+                </div>
+
+                <div class="form-group">
+                    <label for="studentEmail">Your Email</label>
+                    <input type="email" id="studentEmail" name="studentEmail" placeholder="Enter your email address..." required>
+                </div>
+
+                <div class="form-group">
                     <label for="language">Programming Language</label>
                     <select id="language" name="language" required>
                         <option value="">Select a language...</option>
@@ -336,21 +369,29 @@
                     <div class="loading"></div>
                 </div>
 
-                <!-- Ready Status -->
+                <!-- Interview Ready Status -->
                 <div id="status-ready" style="display: none;">
                     <div class="status-icon">🎤</div>
-                    <div class="status-message">Your interview is ready!</div>
-                    <div id="interview-link-section"></div>
+                    <div class="status-message">Your Interview is Ready!</div>
+                    <div id="interview-link-section" class="interview-link"></div>
+                    <div style="margin-top: 20px;">
+                        <button onclick="startPolling()" class="btn" style="max-width: 300px; margin: 0 auto;">
+                            I've Started the Interview
+                        </button>
+                    </div>
                 </div>
 
                 <!-- Waiting Status -->
                 <div id="status-waiting" style="display: none;">
                     <div class="status-icon">⏳</div>
-                    <div class="status-message">Complete your interview to see results</div>
-                    <div id="waiting-interview-link" style="margin-top: 20px;"></div>
-                    <p style="color: #666; font-size: 0.9rem; margin-top: 15px;">
-                        Complete the interview and return to this page. We'll automatically detect when you're finished and show your results.
-                    </p>
+                    <div class="status-message">Waiting for Interview Completion</div>
+                    <div id="waiting-interview-link" class="interview-link"></div>
+                    <div style="margin-top: 20px;">
+                        <div class="loading"></div>
+                        <p style="color: #666; font-size: 0.9rem; margin-top: 15px; text-align: center;">
+                            Checking every 5 seconds for completion... You can close this tab and return later.
+                        </p>
+                    </div>
                 </div>
 
                 <!-- Completed Status -->
@@ -446,7 +487,7 @@
             }
         }
 
-        // Display user information
+        // Display user information and pre-populate form
         function displayUserInfo(user) {
             document.getElementById('userName').textContent = user.name || 'Student';
             document.getElementById('userEmail').textContent = user.email || '';
@@ -455,6 +496,14 @@
                 document.getElementById('userAvatar').innerHTML = `<img src="${user.picture}" alt="Avatar" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;">`;
             } else {
                 document.getElementById('userAvatar').textContent = (user.name || 'S')[0].toUpperCase();
+            }
+
+            // Pre-populate form fields with Auth0 data if available
+            if (user.name) {
+                document.getElementById('studentName').value = user.name;
+            }
+            if (user.email) {
+                document.getElementById('studentEmail').value = user.email;
             }
         }
 
@@ -478,11 +527,17 @@
             
             const formData = new FormData(e.target);
             const data = {
-                studentName: currentUser.name || 'Student',
-                studentEmail: currentUser.email || '',
+                studentName: formData.get('studentName'),
+                studentEmail: formData.get('studentEmail'),
                 language: formData.get('language'),
                 code: formData.get('code')
             };
+
+            // Validate required fields
+            if (!data.studentName || !data.studentEmail || !data.language || !data.code) {
+                alert('Please fill in all required fields.');
+                return;
+            }
             
             // Show loading state
             document.getElementById('submitText').classList.add('hidden');
@@ -514,19 +569,18 @@
                     // Show interview link
                     const linkSection = document.getElementById('interview-link-section');
                     linkSection.innerHTML = `
-                        <div class="interview-link">
-                            <h4>🎤 Your Interview is Ready!</h4>
-                            <p>Click the link below to start your code interview:</p>
-                            <a href="${result.interviewLink}" target="_blank">${result.interviewLink}</a>
-                            <p style="margin-top: 15px; font-size: 14px; color: #666;">
-                                Complete the interview and return to this page. We'll automatically detect when you're finished.
-                            </p>
+                        <h4>� Ready to Start</h4>
+                        <p>Click the link below to begin your personalized code interview:</p>
+                        <a href="${result.interviewLink}" target="_blank" onclick="trackInterviewStart()">
+                            🚀 Start Interview Now
+                        </a>
+                        <div style="font-size: 0.9rem; color: #666; margin-top: 15px;">
+                            <p>📝 The interview will ask about your specific code</p>
+                            <p>⏱️ Takes about 10-15 minutes to complete</p>
+                            <p>🔄 Return here afterward to see your AI detection results</p>
                         </div>
                     `;
-                    linkSection.style.display = 'block';
                     
-                    // Start polling for completion
-                    startPolling();
                 } else {
                     throw new Error(result.error || 'Failed to create interview');
                 }
@@ -537,18 +591,31 @@
             }
         });
 
+        // Track when user starts the interview
+        function trackInterviewStart() {
+            // Small delay to allow the link to open, then start polling
+            setTimeout(() => {
+                startPolling();
+            }, 2000);
+        }
+
         // Start polling for interview completion
         function startPolling() {
-            // Update status to show waiting with interview link
+            // Update status to show waiting
             document.getElementById('status-ready').style.display = 'none';
             document.getElementById('status-waiting').style.display = 'flex';
             
-            // Copy the interview link to the waiting status
-            const originalLinkSection = document.getElementById('interview-link-section');
+            // Show simplified waiting content
             const waitingLinkSection = document.getElementById('waiting-interview-link');
-            if (originalLinkSection.innerHTML) {
-                waitingLinkSection.innerHTML = originalLinkSection.innerHTML;
-            }
+            waitingLinkSection.innerHTML = `
+                <h4>📋 Interview in Progress</h4>
+                <p>Complete your interview in the other tab/window</p>
+                <div style="font-size: 0.9rem; color: #666; margin-top: 15px;">
+                    <p>✅ Interview questions are personalized to your code</p>
+                    <p>🕐 We'll automatically detect when you finish</p>
+                    <p>🔍 Results will appear here once completed</p>
+                </div>
+            `;
             
             pollInterval = setInterval(async () => {
                 try {
