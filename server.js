@@ -271,13 +271,13 @@ For the interview don't worry about topics that do not relate to the code, such 
     // Determine AI likelihood based on score
     let aiLikelihood;
     if (geminiAnalysis.score >= 70) {
-      aiLikelihood = 'likely human-written';
-    } else if (geminiAnalysis.score >= 50) {
-      aiLikelihood = 'possibly human-written';
-    } else if (geminiAnalysis.score >= 30) {
-      aiLikelihood = 'possibly AI-generated';
-    } else {
       aiLikelihood = 'likely AI-generated';
+    } else if (geminiAnalysis.score >= 50) {
+      aiLikelihood = 'possibly AI-generated';
+    } else if (geminiAnalysis.score >= 30) {
+      aiLikelihood = 'possibly human-written';
+    } else {
+      aiLikelihood = 'likely human-written';
     }
 
     return {
@@ -322,101 +322,6 @@ function extractConfidenceFromText(text) {
     return 'low';
   }
   return 'medium';
-}
-
-// Basic analysis fallback (original function)
-function analyzeForAIDetectionBasic(interviewData, originalCode) {
-  if (!interviewData || !interviewData.transcript) {
-    return {
-      confidence: 0,
-      aiLikelihood: 'unknown',
-      reasoning: 'No interview data available'
-    };
-  }
-  
-  const transcript = interviewData.transcript.toLowerCase();
-  
-  // Scoring factors
-  let score = 50; // Start neutral
-  const factors = [];
-  
-  // Positive indicators (human-written)
-  if (transcript.includes('i wrote') || transcript.includes('i coded') || transcript.includes('i implemented')) {
-    score += 15;
-    factors.push('Claims personal authorship (+15)');
-  }
-  
-  if (transcript.includes('struggled') || transcript.includes('difficult') || transcript.includes('challenging')) {
-    score += 10;
-    factors.push('Mentions coding challenges (+10)');
-  }
-  
-  if (transcript.includes('debugged') || transcript.includes('fixed bugs') || transcript.includes('error')) {
-    score += 12;
-    factors.push('Discusses debugging process (+12)');
-  }
-  
-  // Detailed explanations
-  const codeKeywords = ['variable', 'function', 'loop', 'condition', 'algorithm', 'data structure'];
-  const keywordMatches = codeKeywords.filter(keyword => transcript.includes(keyword)).length;
-  if (keywordMatches >= 3) {
-    score += 10;
-    factors.push(`Uses technical terminology (${keywordMatches} matches) (+10)`);
-  }
-  
-  // Negative indicators (AI-generated)
-  if (transcript.includes('generated') || transcript.includes('chatgpt') || transcript.includes('ai')) {
-    score -= 25;
-    factors.push('Mentions AI tools (-25)');
-  }
-  
-  if (transcript.includes('copy') || transcript.includes('paste') || transcript.includes('copied')) {
-    score -= 15;
-    factors.push('Mentions copying code (-15)');
-  }
-  
-  if (transcript.includes("don't know") || transcript.includes("not sure") || transcript.includes("can't explain")) {
-    score -= 12;
-    factors.push('Shows uncertainty about code (-12)');
-  }
-  
-  // Very short or generic responses
-  if (transcript.length < 200) {
-    score -= 10;
-    factors.push('Very brief responses (-10)');
-  }
-  
-  // Ensure score is within bounds
-  score = Math.max(0, Math.min(100, score));
-  
-  let aiLikelihood;
-  let confidence;
-  
-  if (score >= 70) {
-    aiLikelihood = 'likely human-written';
-    confidence = 'high';
-  } else if (score >= 50) {
-    aiLikelihood = 'possibly human-written';
-    confidence = 'medium';
-  } else if (score >= 30) {
-    aiLikelihood = 'possibly AI-generated';
-    confidence = 'medium';
-  } else {
-    aiLikelihood = 'likely AI-generated';
-    confidence = 'high';
-  }
-  
-  return {
-    score,
-    confidence,
-    aiLikelihood,
-    reasoning: factors.join('; '),
-    transcriptLength: transcript.length,
-    redFlags: [],
-    humanIndicators: [],
-    keyObservations: [],
-    geminiAnalysis: false
-  };
 }
 
 // Routes
