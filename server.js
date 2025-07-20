@@ -169,10 +169,7 @@ async function analyzeForAIDetection(interviewData, originalCode) {
     };
   }
 
-  if (!GEMINI_API_KEY || GEMINI_API_KEY === 'AIzaSyBXxNIN5-Bn1qtmqpe22v5xnCtrSduJWIQ') {
-    console.log('Gemini API key not configured, using basic analysis');
-    return analyzeForAIDetectionBasic(interviewData, originalCode);
-  }
+
 
   try {
     const model = genAI.getGenerativeModel({ model: "gemini-pro" });
@@ -294,34 +291,8 @@ For the interview don't worry about topics that do not relate to the code, such 
 
   } catch (error) {
     console.error('Gemini AI analysis failed:', error);
-    console.log('Falling back to basic analysis');
-    return analyzeForAIDetectionBasic(interviewData, originalCode);
+    throw error; // Don't fall back, just throw the error
   }
-}
-
-// Helper functions for text parsing
-function extractScoreFromText(text) {
-  const scoreMatch = text.match(/score[\":\s]*(\d+)/i);
-  if (scoreMatch) {
-    return parseInt(scoreMatch[1]);
-  }
-  
-  // Look for percentage
-  const percentMatch = text.match(/(\d+)%/);
-  if (percentMatch) {
-    return parseInt(percentMatch[1]);
-  }
-  
-  return 50; // Default neutral score
-}
-
-function extractConfidenceFromText(text) {
-  if (text.toLowerCase().includes('high confidence') || text.toLowerCase().includes('very confident')) {
-    return 'high';
-  } else if (text.toLowerCase().includes('low confidence') || text.toLowerCase().includes('uncertain')) {
-    return 'low';
-  }
-  return 'medium';
 }
 
 // Routes
