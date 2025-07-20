@@ -225,7 +225,7 @@ ${originalCode || 'Code not available'}
 
 **Required Output Format (JSON only):**
 {
-  "score": [number from 0-100, where 0=definitely AI-generated, 100=definitely human-written],
+  "score": [number from 0-100, where 0=definitely human-written, 100=definitely AI-generated],
   "confidence": "[low/medium/high]",
   "reasoning": "[detailed explanation of your analysis]",
   "redFlags": ["list of specific concerns suggesting AI generation"],
@@ -233,7 +233,8 @@ ${originalCode || 'Code not available'}
   "keyObservations": ["important patterns you noticed in code or interview"]
 }
 
-Focus on concrete evidence. Be thorough but concise.
+Focus on concrete evidence. Be thorough but concise. 
+For the interview don't worry about topics that do not relate to the code, such as about personal life or expectations of payment.
 `;
 
     const result = await model.generateContent(prompt);
