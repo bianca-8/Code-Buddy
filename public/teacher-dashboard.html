@@ -657,7 +657,7 @@
             modal.style.display = 'block';
             
             try {
-                const response = await fetch(`/api/teacher/interview/${interviewId}`);
+                const response = await fetch(`/api/teacher/interview/${interviewId}?offset=3`);
                 const data = await response.json();
                 
                 if (!response.ok) {
