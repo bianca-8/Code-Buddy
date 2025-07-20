@@ -141,7 +141,10 @@
         
         .interviews-grid {
             display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
             gap: 20px;
+            width: 100%;
+            margin-top: 20px;
         }
         
         .interview-card {
@@ -461,7 +464,7 @@
                     <li>Gemini API quota limit reached (resets daily)</li>
                     <li>All interviews are still in progress</li>
                 </ul>
-                <p style="margin-top: 20px;">Students can submit code via the <a href="/student-portal.html" style="color: #667eea;">Student Portal</a>.</p>
+                <p style="margin-top: 20px;">Students can submit code via the <a href="/" style="color: #667eea;">Codefessor</a>.</p>
             </div>
 
             <!-- Interviews Grid -->
@@ -510,6 +513,19 @@
                 // Check if user is authenticated
                 const isAuthenticated = await auth0Client.isAuthenticated();
                 if (!isAuthenticated) {
+                    // For development/testing, allow bypass with URL parameter
+                    const urlParams = new URLSearchParams(window.location.search);
+                    if (urlParams.get('bypass') === 'true') {
+                        console.log('Authentication bypassed for testing');
+                        currentUser = {
+                            name: 'Test Teacher',
+                            email: 'test@teacher.com',
+                            picture: null
+                        };
+                        displayUserInfo(currentUser);
+                        loadRecentInterviews();
+                        return;
+                    }
                     // Redirect to homepage if not authenticated
                     window.location.href = '/homepage.html';
                     return;
@@ -551,12 +567,20 @@
                 const response = await fetch('/api/teacher/recent-interviews');
                 const data = await response.json();
                 
+                console.log('API Response received:', data);
+                
                 if (!data.success) {
                     throw new Error(data.error || 'Failed to load interviews');
                 }
                 
                 interviewsData = data.interviews;
-                console.log('Loaded interviews:', interviewsData);
+                console.log('Interviews loaded:', interviewsData.length, 'total');
+                console.log('Interview details:', interviewsData.map(i => ({
+                    id: i.interviewId,
+                    name: i.studentName,
+                    score: i.aiScore,
+                    likelihood: i.aiLikelihood
+                })));
                 
                 updateDashboardStats(interviewsData);
                 displayInterviews(interviewsData);
@@ -573,8 +597,13 @@
         function updateDashboardStats(interviews) {
             const total = interviews.length;
             const avgScore = total > 0 ? Math.round(interviews.reduce((sum, i) => sum + i.aiScore, 0) / total) : 0;
-            const humanWritten = interviews.filter(i => i.aiScore >= 70).length;
-            const aiGenerated = interviews.filter(i => i.aiScore < 30).length;
+            
+            // Use the simplified teacher classification (binary: likely human vs likely AI)
+            const humanWritten = interviews.filter(i => i.aiLikelihood === 'likely human-written').length;
+            const aiGenerated = interviews.filter(i => i.aiLikelihood === 'likely AI-generated').length;
+            const indecisive = interviews.filter(i => i.aiLikelihood === 'indecisive').length;
+            
+            console.log(`Stats: ${total} total, ${humanWritten} human, ${aiGenerated} AI, ${indecisive} indecisive`);
             
             document.getElementById('totalInterviews').textContent = total;
             document.getElementById('avgAiScore').textContent = avgScore;
@@ -584,19 +613,25 @@
 
         // Display interviews in grid
         function displayInterviews(interviews) {
+            console.log('displayInterviews called with:', interviews.length, 'interviews');
             const grid = document.getElementById('interviewsGrid');
             const emptyState = document.getElementById('emptyState');
             
             if (interviews.length === 0) {
+                console.log('No interviews to display, showing empty state');
                 grid.style.display = 'none';
                 emptyState.style.display = 'block';
                 return;
             }
             
+            console.log('Hiding empty state, showing grid with', interviews.length, 'interviews');
             emptyState.style.display = 'none';
             grid.style.display = 'block';
             
-            grid.innerHTML = interviews.map(interview => createInterviewCard(interview)).join('');
+            const cardsHTML = interviews.map(interview => createInterviewCard(interview)).join('');
+            console.log('Generated HTML for', interviews.length, 'cards, total length:', cardsHTML.length);
+            grid.innerHTML = cardsHTML;
+            console.log('Grid innerHTML set, grid element:', grid);
         }
 
         // Create interview card HTML
