@@ -22,8 +22,74 @@ app.use(express.static('public'));
 // Store interview sessions (in production, use a database)
 const sessions = new Map();
 
-// Helper function to generate code analysis questions
-function generateCodeQuestions(code, language) {
+// Helper function to generate code analysis questions using Gemini AI
+async function generateCodeQuestions(code, language) {
+  try {
+    const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+    
+    const prompt = `
+You are an expert code reviewer helping assess code understanding. Analyze the following ${language} code and generate 6 specific, targeted questions that will help determine if the person truly understands their own code.
+
+**Code to analyze:**
+\`\`\`${language}
+${code}
+\`\`\`
+
+**Requirements for questions:**
+1. Questions should be SPECIFIC to this exact code, not generic
+2. Focus on testing deep understanding of design decisions, logic, and implementation details
+3. Questions should reveal if someone actually wrote the code vs. just copied it
+4. Include questions about specific functions, variables, or logic patterns in THIS code
+5. Ask about potential issues, edge cases, or improvements specific to THIS implementation
+6. Keep questions focused strictly on the code - no personal or unrelated topics
+7. Frame questions as friendly code review discussion, not job interview questions
+
+**Question types to include:**
+- Ask about specific variable names, function names, or logic choices in their code
+- Question specific implementation decisions they made
+- Ask about potential bugs or edge cases in their specific code
+- Test understanding of how specific parts of their code work together
+- Ask about alternatives to their specific approach
+- Question specific error handling or lack thereof in their code
+
+**Output format:**
+Return exactly 6 questions as a JSON array of strings. Each question should reference specific elements from the provided code.
+
+Example format:
+["Question 1 about specific code element", "Question 2 about specific implementation", ...]
+
+Make the questions conversational and friendly, like a code review discussion. Focus on "Can you explain..." and "What happens if..." questions about their specific code.
+`;
+
+    const result = await model.generateContent(prompt);
+    const response = result.response;
+    const text = response.text();
+    
+    // Try to extract JSON array from response
+    try {
+      const jsonMatch = text.match(/\[[\s\S]*\]/);
+      if (jsonMatch) {
+        const questions = JSON.parse(jsonMatch[0]);
+        if (Array.isArray(questions) && questions.length > 0) {
+          console.log(`Generated ${questions.length} tailored questions for ${language} code`);
+          return questions;
+        }
+      }
+    } catch (parseError) {
+      console.log('Could not parse Gemini questions response, falling back to default');
+    }
+    
+    // Fallback to default questions if Gemini fails
+    return generateDefaultQuestions(code, language);
+    
+  } catch (error) {
+    console.error('Gemini question generation failed:', error);
+    return generateDefaultQuestions(code, language);
+  }
+}
+
+// Fallback function for default questions
+function generateDefaultQuestions(code, language) {
   const baseQuestions = [
     "Can you walk me through what this code does, line by line?",
     "What is the main purpose or functionality of this code?",
@@ -48,13 +114,13 @@ function generateCodeQuestions(code, language) {
 // Create interview flow for code review
 async function createInterviewFlow(code, language, studentName) {
   try {
-    const questions = generateCodeQuestions(code, language);
+    const questions = await generateCodeQuestions(code, language);
     
     const response = await axios.post(`${RIBBON_BASE_URL}/interview-flows`, {
       org_name: "Code Buddy",
-      title: `Code Review Interview - ${language}`,
+      title: `Code Understanding Assessment - ${language}`,
       questions: questions,
-      interview_type: "recruitment",
+      interview_type: "other",
       is_video_enabled: true
     }, {
       headers: {
@@ -203,6 +269,7 @@ ${originalCode || 'Code not available'}
    - **Specific Knowledge:** Can they discuss edge cases, limitations, or alternative approaches?
    - **Generic Responses:** Are answers too perfect or could apply to any code?
    - **Technical Depth:** Do they understand the underlying concepts or just surface-level?
+   - **Link with Code:** Do their explanations match the code structure and logic?
 
 3. **Red Flags for AI Generation:**
    - Can't explain specific design choices
