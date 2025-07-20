@@ -356,7 +356,7 @@
         
         <!-- Results Section -->
         <div id="results-section" class="card results-section">
-            <h2 style="margin-bottom: 30px; color: #333;">Interview Analysis Results</h2>
+            <h2 style="margin-bottom: 30px; color: #333;">🤖 AI Detection Analysis Results</h2>
             
             <div id="score-display" class="score-card">
                 <div class="score-number" id="score-number">--</div>
@@ -365,30 +365,66 @@
             
             <div class="analysis-grid">
                 <div class="analysis-item">
-                    <h4>Assessment</h4>
+                    <h4>🎯 Assessment</h4>
                     <p id="ai-likelihood">--</p>
                 </div>
                 <div class="analysis-item">
-                    <h4>Confidence Level</h4>
+                    <h4>📈 Confidence Level</h4>
                     <p id="confidence-level">--</p>
                 </div>
                 <div class="analysis-item">
-                    <h4>Student</h4>
+                    <h4>👤 Student</h4>
                     <p id="student-info">--</p>
+                </div>
+                <div class="analysis-item">
+                    <h4>🔍 Analysis Type</h4>
+                    <p id="analysis-type">--</p>
                 </div>
             </div>
             
             <div class="analysis-item">
-                <h4>Analysis Factors</h4>
+                <h4>💭 Reasoning</h4>
                 <p id="reasoning">--</p>
             </div>
             
-            <div id="transcript-section" class="transcript-section">
-                <h4>Interview Transcript</h4>
-                <div id="transcript-text" class="transcript-text">--</div>
+            <!-- Enhanced Gemini Analysis Details -->
+            <div id="gemini-details" style="display: none;">
+                <div class="analysis-item">
+                    <h4>🚩 Red Flags (AI Indicators)</h4>
+                    <ul id="red-flags-list" style="margin: 10px 0; padding-left: 20px; color: #dc3545;"></ul>
+                </div>
+                <div class="analysis-item">
+                    <h4>✅ Human Indicators</h4>
+                    <ul id="human-indicators-list" style="margin: 10px 0; padding-left: 20px; color: #28a745;"></ul>
+                </div>
+                <div class="analysis-item">
+                    <h4>🔍 Key Observations</h4>
+                    <ul id="key-observations-list" style="margin: 10px 0; padding-left: 20px; color: #6c757d;"></ul>
+                </div>
             </div>
             
-            <button onclick="resetApplication()" class="btn reset-btn">Start New Interview</button>
+            <!-- Expandable sections for code and transcript -->
+            <div style="margin-top: 30px;">
+                <details style="margin-bottom: 15px;">
+                    <summary style="cursor: pointer; font-weight: 600; padding: 10px; background: #f8f9fa; border-radius: 8px;">
+                        💻 View Original Code
+                    </summary>
+                    <div style="margin-top: 15px; padding: 20px; background: #f8f9fa; border-radius: 8px; white-space: pre-wrap; font-family: monospace; font-size: 14px; max-height: 300px; overflow-y: auto;">
+                        <div id="original-code-text">--</div>
+                    </div>
+                </details>
+                
+                <details>
+                    <summary style="cursor: pointer; font-weight: 600; padding: 10px; background: #f8f9fa; border-radius: 8px;">
+                        📝 View Interview Transcript
+                    </summary>
+                    <div style="margin-top: 15px; padding: 20px; background: #f8f9fa; border-radius: 8px; white-space: pre-wrap; font-family: monospace; font-size: 14px; max-height: 300px; overflow-y: auto;">
+                        <div id="transcript-text">--</div>
+                    </div>
+                </details>
+            </div>
+            
+            <button onclick="resetApplication()" class="btn reset-btn">🔄 Start New Analysis</button>
         </div>
     </div>
 
@@ -496,8 +532,56 @@
                 document.getElementById('ai-likelihood').textContent = analysis.aiLikelihood;
                 document.getElementById('confidence-level').textContent = analysis.confidence;
                 document.getElementById('student-info').textContent = `${result.studentInfo.name} (${result.studentInfo.language})`;
+                document.getElementById('analysis-type').textContent = analysis.geminiAnalysis ? 'Gemini AI Enhanced' : 'Basic Analysis';
                 document.getElementById('reasoning').textContent = analysis.reasoning || 'No specific factors identified';
                 document.getElementById('transcript-text').textContent = result.transcript || 'No transcript available';
+                document.getElementById('original-code-text').textContent = result.originalCode || 'Original code not available';
+                
+                // Show enhanced Gemini details if available
+                if (analysis.geminiAnalysis && (analysis.redFlags || analysis.humanIndicators || analysis.keyObservations)) {
+                    document.getElementById('gemini-details').style.display = 'block';
+                    
+                    // Populate red flags
+                    const redFlagsList = document.getElementById('red-flags-list');
+                    redFlagsList.innerHTML = '';
+                    if (analysis.redFlags && analysis.redFlags.length > 0) {
+                        analysis.redFlags.forEach(flag => {
+                            const li = document.createElement('li');
+                            li.textContent = flag;
+                            redFlagsList.appendChild(li);
+                        });
+                    } else {
+                        redFlagsList.innerHTML = '<li style="color: #6c757d;">No specific red flags identified</li>';
+                    }
+                    
+                    // Populate human indicators
+                    const humanIndicatorsList = document.getElementById('human-indicators-list');
+                    humanIndicatorsList.innerHTML = '';
+                    if (analysis.humanIndicators && analysis.humanIndicators.length > 0) {
+                        analysis.humanIndicators.forEach(indicator => {
+                            const li = document.createElement('li');
+                            li.textContent = indicator;
+                            humanIndicatorsList.appendChild(li);
+                        });
+                    } else {
+                        humanIndicatorsList.innerHTML = '<li style="color: #6c757d;">No specific human indicators identified</li>';
+                    }
+                    
+                    // Populate key observations
+                    const keyObservationsList = document.getElementById('key-observations-list');
+                    keyObservationsList.innerHTML = '';
+                    if (analysis.keyObservations && analysis.keyObservations.length > 0) {
+                        analysis.keyObservations.forEach(observation => {
+                            const li = document.createElement('li');
+                            li.textContent = observation;
+                            keyObservationsList.appendChild(li);
+                        });
+                    } else {
+                        keyObservationsList.innerHTML = '<li style="color: #6c757d;">No specific observations noted</li>';
+                    }
+                } else {
+                    document.getElementById('gemini-details').style.display = 'none';
+                }
                 
                 // Color code the score
                 const scoreElement = document.getElementById('score-number');
