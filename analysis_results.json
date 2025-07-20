@@ -161,5 +161,59 @@
       "analyzedAt": "2025-07-20T05:50:31.336Z",
       "interviewId": "e676cb71-7568-4777-8f20-f2fe454dfa3e"
     }
+  ],
+  [
+    "2fee0d3b-4901-4893-93ab-fdbbd93750b0",
+    {
+      "score": 30,
+      "confidence": "medium",
+      "aiLikelihood": "indecisive",
+      "reasoning": "The interview transcript reveals a significant lack of depth in the candidate's understanding of the Sieve of Eratosthenes algorithm and their own code.  While they can give surface-level answers to some questions, they consistently struggle to explain the *why* behind design decisions, exhibiting hesitation and resorting to vague responses.  Their answers often lack specificity and are too general to be convincing.  The absence of any discussion about debugging, coding challenges, or iterative development heavily suggests a lack of firsthand experience.  The interviewee's responses are eerily consistent with how an AI might answer – providing technically correct but shallow explanations.  Without seeing the code, it's hard to definitively say if it is AI-generated. However, the interview strongly suggests the interviewee is not familiar with the code and either memorized answers or is an AI itself.",
+      "redFlags": [
+        "Inconsistent understanding of the algorithm and their code.",
+        "Inability to explain the reasoning behind specific code choices.",
+        "Vague and generic responses to technical questions.",
+        "Lack of discussion regarding debugging, challenges, or iterative improvements.",
+        "Responses that are too perfectly structured and lack personal experience or struggle.",
+        "Unsubstantiated claims about optimizations without justification."
+      ],
+      "humanIndicators": [],
+      "keyObservations": [
+        "The interviewee's lack of in-depth knowledge about the algorithm is the strongest indicator of AI generation.",
+        "The candidate's consistent hesitation and evasiveness point towards a lack of genuine understanding."
+      ],
+      "geminiAnalysis": true,
+      "transcriptLength": 5128,
+      "suspiciousPhrases": [
+        {
+          "text": "I don't know I'm not too sure. Yeah.",
+          "type": "transcript",
+          "reason": "This phrase demonstrates a lack of confidence and understanding, which is unusual for someone who wrote the code themselves.  It's a filler phrase often used to avoid a direct answer and is a pattern observed in AI outputs."
+        },
+        {
+          "text": "Whatever it is that you want.",
+          "type": "transcript",
+          "reason": "This unassertive response is characteristic of an AI avoiding commitment to a specific decision, rather than a human programmer who would advocate for their approach."
+        },
+        {
+          "text": "Um, there would be an indexing error\nUser: out of range",
+          "type": "transcript",
+          "reason": "While technically correct, the response lacks elaboration and detailed explanation, aligning with AI's tendency towards concise, factual answers instead of in-depth justifications."
+        },
+        {
+          "text": "Right. So that is supposed to save time. Because when you're checking all of the factors, you don't actually need to go all the way up to y. Actually take the square root of it because the biggest possible minimum factor is the square root of that.",
+          "type": "transcript",
+          "reason": "This explanation, although accurate, lacks the depth of understanding one would expect from a human programmer. It sounds like a memorized explanation rather than a deep conceptual understanding."
+        }
+      ],
+      "studentInfo": {
+        "name": "Unknown Student",
+        "email": "Unknown Email",
+        "language": "Unknown",
+        "code": null
+      },
+      "analyzedAt": "2025-07-20T08:49:47.518Z",
+      "interviewId": "2fee0d3b-4901-4893-93ab-fdbbd93750b0"
+    }
   ]
 ]

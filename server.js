@@ -52,8 +52,13 @@ app.use(cors());
 app.use(bodyParser.json());
 app.use(express.static('public'));
 
-// Serve homepage by default
+// Serve index page by default (student portal)
 app.get('/', (req, res) => {
+  res.sendFile(__dirname + '/public/index.html');
+});
+
+// Serve homepage
+app.get('/homepage.html', (req, res) => {
   res.sendFile(__dirname + '/public/homepage.html');
 });
 
@@ -125,7 +130,7 @@ async function createInterviewFlow(code, language, studentName) {
     console.log(`Generated questions:`, questions);
     
     const flowData = {
-      org_name: "Code Buddy",
+      org_name: "Codefessor",
       title: `Code Understanding Assessment - ${language}`,
       questions: questions,
       interview_type: "recruitment",

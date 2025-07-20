@@ -6,6 +6,7 @@
     <title>Codefessor - AI Detection Interview</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.auth0.com/js/auth0-spa-js/2.0/auth0-spa-js.production.js"></script>
     <style>
         * {
             margin: 0;
@@ -27,7 +28,9 @@
         }
         
         .header {
-            text-align: center;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
             margin-bottom: 40px;
             color: white;
         }
@@ -35,12 +38,44 @@
         .header h1 {
             font-size: 2.5rem;
             font-weight: 700;
-            margin-bottom: 10px;
         }
         
-        .header p {
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: 2px solid white;
+        }
+        
+        .user-details {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .user-name {
+            font-weight: 600;
             font-size: 1.1rem;
-            opacity: 0.9;
+        }
+        
+        .logout-btn {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .logout-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
         }
         
         .card {
@@ -279,22 +314,35 @@
     <div class="container">
         <div class="header">
             <h1>🤖 Codefessor</h1>
-            <p>AI-Powered Code Interview System</p>
+            <div class="user-info">
+                <button onclick="window.location.href='/homepage.html'" class="logout-btn" style="margin-right: 10px;">🏠 Homepage</button>
+                <img id="userAvatar" class="user-avatar" style="display: none;">
+                <div class="user-details">
+                    <div id="userName" class="user-name"></div>
+                </div>
+                <button onclick="logout()" class="logout-btn">Logout</button>
+            </div>
         </div>
         
         <!-- Code Submission Form -->
         <div id="submission-form" class="card">
-            <h2 style="margin-bottom: 30px; color: #333;">Submit Your Code for Interview</h2>
+            <h2 style="margin-bottom: 30px; color: #333;">📝 Submit Your Code for Interview</h2>
             
-            <form id="codeForm">
+            <div style="background: #f8f9fa; border-radius: 10px; padding: 20px; margin-bottom: 30px; border-left: 4px solid #667eea;">
+                <p style="margin: 0; color: #666; font-size: 0.95rem;">
+                    <strong>📋 Your Information:</strong> Please provide your name and email below. This information will be shared with your teacher/instructor along with your interview results for grading and feedback purposes.
+                </p>
+            </div>
+            
+            <form id="codeForm" onsubmit="return handleFormSubmissionInline(event)">
                 <div class="form-row">
                     <div class="form-group">
-                        <label for="studentName">Student Name</label>
-                        <input type="text" id="studentName" name="studentName" required placeholder="Enter your full name">
+                        <label for="studentName">👤 Your Full Name:</label>
+                        <input type="text" id="studentName" name="studentName" required placeholder="Enter your full name (as it appears in class records)">
                     </div>
                     <div class="form-group">
-                        <label for="studentEmail">Email Address</label>
-                        <input type="email" id="studentEmail" name="studentEmail" required placeholder="your.email@example.com">
+                        <label for="studentEmail">📧 Your Email Address:</label>
+                        <input type="email" id="studentEmail" name="studentEmail" required placeholder="Enter your email address (for teacher communication)">
                     </div>
                 </div>
                 
@@ -314,6 +362,7 @@
                         <option value="ruby">Ruby</option>
                         <option value="swift">Swift</option>
                         <option value="kotlin">Kotlin</option>
+                        <option value="typescript">TypeScript</option>
                         <option value="other">Other</option>
                     </select>
                 </div>
@@ -323,7 +372,14 @@
                     <textarea id="code" name="code" required placeholder="Paste your code here..."></textarea>
                 </div>
                 
-                <button type="submit" class="btn">Start Interview Process</button>
+                <div style="background: linear-gradient(135deg, #e3f2fd, #f3e5f5); border-radius: 10px; padding: 15px; margin: 20px 0; border: 1px solid #667eea;">
+                    <p style="margin: 0; color: #555; font-size: 0.9rem; text-align: center;">
+                        <strong>📤 What gets shared with your teacher:</strong><br>
+                        Your name, email, code, interview responses, and AI detection analysis results
+                    </p>
+                </div>
+                
+                <button type="submit" class="btn">🚀 Create My Interview</button>
             </form>
         </div>
         
@@ -432,10 +488,128 @@
     </div>
 
     <script>
+        // Auth0 configuration
+        const auth0Client = new auth0.Auth0Client({
+            domain: 'dev-rb7h2zv1l2rb2ysz.us.auth0.com',
+            clientId: 'uKOsiJ2LfZsP55dhiTzvYPz0Ndyy9SA6',
+            authorizationParams: {
+                redirect_uri: window.location.origin + '/'
+            }
+        });
+
         let currentInterviewId = null;
         let pollInterval = null;
 
-        document.getElementById('codeForm').addEventListener('submit', async function(e) {
+        // Initialize page
+        async function init() {
+            console.log('Initializing page...');
+            try {
+                // Check if user is authenticated
+                const isAuthenticated = await auth0Client.isAuthenticated();
+                console.log('Is authenticated:', isAuthenticated);
+                
+                if (!isAuthenticated) {
+                    // Check for code in URL (coming back from Auth0)
+                    const query = window.location.search;
+                    console.log('URL query:', query);
+                    if (query.includes('code=')) {
+                        console.log('Handling Auth0 callback...');
+                        await auth0Client.handleRedirectCallback();
+                        window.history.replaceState({}, document.title, '/');
+                        
+                        // Check if now authenticated
+                        const nowAuthenticated = await auth0Client.isAuthenticated();
+                        if (nowAuthenticated) {
+                            const user = await auth0Client.getUser();
+                            console.log('User authenticated after callback:', user);
+                            displayUserInfo(user);
+                            
+                            // Auto-populate form fields
+                            document.getElementById('studentName').value = user.name || '';
+                            document.getElementById('studentEmail').value = user.email || '';
+                            return;
+                        }
+                    }
+                    
+                    // If not authenticated and no callback, redirect to homepage
+                    console.log('Not authenticated, redirecting to homepage...');
+                    window.location.href = '/homepage.html';
+                    return;
+                } else {
+                    // User is already authenticated
+                    const user = await auth0Client.getUser();
+                    console.log('User already authenticated:', user);
+                    displayUserInfo(user);
+                    
+                    // Auto-populate form fields
+                    document.getElementById('studentName').value = user.name || '';
+                    document.getElementById('studentEmail').value = user.email || '';
+                }
+
+            } catch (error) {
+                console.error('Error during initialization:', error);
+                alert('Authentication error: ' + error.message);
+                // Don't redirect on error, let user see the page
+            }
+        }
+
+        function displayUserInfo(user) {
+            const userNameElement = document.getElementById('userName');
+            const userAvatarElement = document.getElementById('userAvatar');
+            
+            if (userNameElement) {
+                userNameElement.textContent = user.name || user.email;
+            }
+            
+            if (userAvatarElement && user.picture) {
+                userAvatarElement.src = user.picture;
+                userAvatarElement.style.display = 'block';
+            }
+        }
+
+        async function logout() {
+            await auth0Client.logout({
+                logoutParams: {
+                    returnTo: window.location.origin + '/homepage.html'
+                }
+            });
+        }
+
+        // Initialize when page loads
+        window.addEventListener('load', function() {
+            init();
+            
+            // Attach form event listener after page is fully loaded
+            const codeForm = document.getElementById('codeForm');
+            if (codeForm) {
+                console.log('Attaching form listener on window load...');
+                codeForm.addEventListener('submit', handleFormSubmission);
+            } else {
+                console.error('Form not found on window load!');
+            }
+        });
+
+        // Wait for DOM to be ready before attaching form event listener
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOM loaded, looking for form...');
+            const codeForm = document.getElementById('codeForm');
+            if (codeForm) {
+                console.log('Form found, attaching event listener...');
+                codeForm.addEventListener('submit', handleFormSubmission);
+            } else {
+                console.error('Form not found!');
+            }
+        });
+
+        async function handleFormSubmissionInline(e) {
+            console.log('Inline form submission handler called');
+            e.preventDefault();
+            await handleFormSubmission(e);
+            return false; // Prevent default form submission
+        }
+
+        async function handleFormSubmission(e) {
+            console.log('Form submission intercepted');
             e.preventDefault();
             
             const formData = new FormData(e.target);
@@ -445,6 +619,12 @@
                 language: formData.get('language'),
                 code: formData.get('code')
             };
+            
+            // Validate form
+            if (!data.studentName || !data.studentEmail || !data.code || !data.language) {
+                alert('Please fill in all fields');
+                return;
+            }
             
             // Hide form and show status
             document.getElementById('submission-form').style.display = 'none';
@@ -492,7 +672,7 @@
                 alert('Error creating interview: ' + error.message);
                 resetApplication();
             }
-        });
+        }
         
         function startPolling() {
             // Show waiting status

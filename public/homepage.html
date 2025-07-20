@@ -243,7 +243,7 @@
                     domain: AUTH0_DOMAIN,
                     clientId: AUTH0_CLIENT_ID,
                     authorizationParams: {
-                        redirect_uri: window.location.origin + '/student-portal.html'
+                        redirect_uri: window.location.origin + '/'
                     }
                 });
                 console.log('Auth0 client created successfully');
@@ -274,7 +274,7 @@
                 console.log('Starting student login redirect...');
                 await auth0Client.loginWithRedirect({
                     authorizationParams: {
-                        redirect_uri: window.location.origin + '/student-portal.html',
+                        redirect_uri: window.location.origin + '/',
                         scope: 'openid profile email'
                     }
                 });
@@ -319,6 +319,13 @@
                     console.log('Handling auth redirect...');
                     await auth0Client.handleRedirectCallback();
                     window.history.replaceState({}, document.title, window.location.pathname);
+                    
+                    // Redirect to index page after successful authentication
+                    const isAuthenticated = await auth0Client.isAuthenticated();
+                    if (isAuthenticated) {
+                        console.log('Authentication successful, redirecting to index page...');
+                        window.location.href = '/';
+                    }
                 } catch (error) {
                     console.error('Error handling redirect callback:', error);
                 }
