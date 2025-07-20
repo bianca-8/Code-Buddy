@@ -6,7 +6,7 @@ const { GoogleGenerativeAI } = require('@google/generative-ai');
 require('dotenv').config();
 
 const app = express();
-const PORT =  3000;
+const PORT = process.env.PORT || 3000;
 const RIBBON_API_KEY = process.env.RIBBON_API_KEY;
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 const RIBBON_BASE_URL = 'https://app.ribbon.ai/be-api/v1';
@@ -24,10 +24,9 @@ const sessions = new Map();
 
 // Helper function to generate code analysis questions using Gemini AI
 async function generateCodeQuestions(code, language) {
-  try {
-    const model = genAI.getGenerativeModel({ model: "gemini-pro" });
-    
-    const prompt = `
+  const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+  
+  const prompt = `
 You are an expert code reviewer helping assess code understanding. Analyze the following ${language} code and generate 6 specific, targeted questions that will help determine if the person truly understands their own code.
 
 **Code to analyze:**
@@ -36,13 +35,15 @@ ${code}
 \`\`\`
 
 **Requirements for questions:**
-1. Questions should be SPECIFIC to this exact code, not generic
-2. Focus on testing deep understanding of design decisions, logic, and implementation details
-3. Questions should reveal if someone actually wrote the code vs. just copied it
-4. Include questions about specific functions, variables, or logic patterns in THIS code
-5. Ask about potential issues, edge cases, or improvements specific to THIS implementation
-6. Keep questions focused strictly on the code - no personal or unrelated topics
-7. Frame questions as friendly code review discussion, not job interview questions
+1. The first question should always be what the overall code does (not what a specific part or function does for the whole but what the code as a whole does) and its main purpose (can be paraphrased). 
+2. The second question should be how did you achieve your overall goal you wanted through the code and why did you choose this specific implementation (can also be paraphrased).
+3. Questions should be SPECIFIC to this exact code, not generic
+4. Focus on testing deep understanding of design decisions, logic, and implementation details
+5. Questions should reveal if someone actually wrote the code vs. just copied it
+6. Include questions about specific functions, variables, or logic patterns in THIS code
+7. Ask about potential issues, edge cases, or improvements specific to THIS implementation
+8. Keep questions focused strictly on the code - no personal or unrelated topics
+9. Frame questions as friendly code review discussion, not job interview questions
 
 **Question types to include:**
 - Ask about specific variable names, function names, or logic choices in their code
@@ -61,68 +62,41 @@ Example format:
 Make the questions conversational and friendly, like a code review discussion. Focus on "Can you explain..." and "What happens if..." questions about their specific code.
 `;
 
-    const result = await model.generateContent(prompt);
-    const response = result.response;
-    const text = response.text();
-    
-    // Try to extract JSON array from response
-    try {
-      const jsonMatch = text.match(/\[[\s\S]*\]/);
-      if (jsonMatch) {
-        const questions = JSON.parse(jsonMatch[0]);
-        if (Array.isArray(questions) && questions.length > 0) {
-          console.log(`Generated ${questions.length} tailored questions for ${language} code`);
-          return questions;
-        }
-      }
-    } catch (parseError) {
-      console.log('Could not parse Gemini questions response, falling back to default');
+  const result = await model.generateContent(prompt);
+  const response = result.response;
+  const text = response.text();
+  
+  // Try to extract JSON array from response
+  const jsonMatch = text.match(/\[[\s\S]*\]/);
+  if (jsonMatch) {
+    const questions = JSON.parse(jsonMatch[0]);
+    if (Array.isArray(questions) && questions.length > 0) {
+      console.log(`Generated ${questions.length} tailored questions for ${language} code`);
+      return questions;
     }
-    
-    // Fallback to default questions if Gemini fails
-    return generateDefaultQuestions(code, language);
-    
-  } catch (error) {
-    console.error('Gemini question generation failed:', error);
-    return generateDefaultQuestions(code, language);
   }
-}
-
-// Fallback function for default questions
-function generateDefaultQuestions(code, language) {
-  const baseQuestions = [
-    "Can you walk me through what this code does, line by line?",
-    "What is the main purpose or functionality of this code?",
-    "Can you explain any algorithms or data structures used in this code?",
-    "How would you modify this code to handle edge cases or errors?",
-    "What would happen if you changed this specific part of the code, and why?"
-  ];
   
-  // Add language-specific questions
-  const languageQuestions = {
-    javascript: "Can you explain how JavaScript's event loop would handle this code?",
-    python: "Can you explain the Python-specific features or libraries used here?",
-    java: "Can you explain the object-oriented principles demonstrated in this code?",
-    cpp: "Can you explain the memory management aspects of this C++ code?",
-    default: "Can you explain any language-specific features used in this code?"
-  };
-  
-  const langQuestion = languageQuestions[language.toLowerCase()] || languageQuestions.default;
-  return [...baseQuestions, langQuestion];
+  throw new Error('Failed to generate valid questions from Gemini API');
 }
 
 // Create interview flow for code review
 async function createInterviewFlow(code, language, studentName) {
   try {
+    console.log(`Creating interview flow for ${studentName} - ${language}`);
     const questions = await generateCodeQuestions(code, language);
+    console.log(`Generated questions:`, questions);
     
-    const response = await axios.post(`${RIBBON_BASE_URL}/interview-flows`, {
+    const flowData = {
       org_name: "Code Buddy",
       title: `Code Understanding Assessment - ${language}`,
       questions: questions,
-      interview_type: "other",
+      interview_type: "recruitment",
       is_video_enabled: true
-    }, {
+    };
+    
+    console.log(`Sending flow data to Ribbon API:`, JSON.stringify(flowData, null, 2));
+    
+    const response = await axios.post(`${RIBBON_BASE_URL}/interview-flows`, flowData, {
       headers: {
         'Authorization': `Bearer ${RIBBON_API_KEY}`,
         'Content-Type': 'application/json',
@@ -130,9 +104,11 @@ async function createInterviewFlow(code, language, studentName) {
       }
     });
     
+    console.log(`Interview flow created successfully:`, response.data);
     return response.data.interview_flow_id;
   } catch (error) {
     console.error('Error creating interview flow:', error.response?.data || error.message);
+    console.error('Full error response:', error.response);
     throw error;
   }
 }
@@ -360,6 +336,31 @@ For the interview don't worry about topics that do not relate to the code, such 
     console.error('Gemini AI analysis failed:', error);
     throw error; // Don't fall back, just throw the error
   }
+}
+
+// Helper functions for text parsing
+function extractScoreFromText(text) {
+  const scoreMatch = text.match(/score[\":\s]*(\d+)/i);
+  if (scoreMatch) {
+    return parseInt(scoreMatch[1]);
+  }
+  
+  // Look for percentage
+  const percentMatch = text.match(/(\d+)%/);
+  if (percentMatch) {
+    return parseInt(percentMatch[1]);
+  }
+  
+  return 50; // Default neutral score
+}
+
+function extractConfidenceFromText(text) {
+  if (text.toLowerCase().includes('high confidence') || text.toLowerCase().includes('very confident')) {
+    return 'high';
+  } else if (text.toLowerCase().includes('low confidence') || text.toLowerCase().includes('uncertain')) {
+    return 'low';
+  }
+  return 'medium';
 }
 
 // Routes
