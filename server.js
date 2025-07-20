@@ -276,10 +276,18 @@ ${originalCode || 'Code not available'}
   "redFlags": ["list of specific concerns suggesting AI generation"],
   "humanIndicators": ["list of specific signs suggesting human authorship"],
   "keyObservations": ["important patterns you noticed in code or interview"],
-  "indecisive": [true/false, true if there is not enough information to make a confident judgment, or if the code is so basic that either AI or human could have written it]
+  "indecisive": [true/false, true if there is not enough information to make a confident judgment, or if the code is so basic that either AI or human could have written it],
+  "suspiciousPhrases": [
+    {
+      "text": "exact suspicious phrase",
+      "type": "code" | "transcript",
+      "reason": "why this phrase is suspicious"
+    },
+    ...
+  ]
 }
 
-If you cannot confidently determine whether the code is AI- or human-written, set "confidence" to "indecisive" and "indecisive" to true, and explain why in "reasoning".
+In addition to your previous instructions, scan both the code and transcript for any highly suspicious phrases or patterns that strongly suggest AI generation (e.g., generic explanations, overly formal language, repeated AI-like patterns, or code comments that match known AI output). For each, add an object to "suspiciousPhrases" with the exact phrase, whether it was found in the code or transcript, and a brief reason.
 `;
 
     const result = await model.generateContent(prompt);
@@ -336,7 +344,8 @@ If you cannot confidently determine whether the code is AI- or human-written, se
       humanIndicators: geminiAnalysis.humanIndicators || [],
       keyObservations: geminiAnalysis.keyObservations || [],
       geminiAnalysis: true,
-      transcriptLength: interviewData.transcript.length
+      transcriptLength: interviewData.transcript.length,
+      suspiciousPhrases: geminiAnalysis.suspiciousPhrases || [],
     };
 
   } catch (error) {
